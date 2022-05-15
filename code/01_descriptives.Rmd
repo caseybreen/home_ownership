@@ -1,0 +1,122 @@
+---
+title: "Descriptive Statistics"
+author: Casey Breen
+---
+
+Summary: Run descriptive statistics
+
+```{r}
+## library packages 
+library(data.table)
+library(tidyverse)
+library(ipumsr)
+library(socviz)
+library(broom)
+library(cowplot)
+library(fixest)
+```
+
+
+```{r}
+## read in full dmf 
+dmf <- fread("/data/josh/CenSoc/censoc_data/censoc_linked_to_census/censoc_dmf_v2_linked.csv")
+
+## read in IPUMS DDI for IPUMS extract
+## we already have a ddi on the server for all vars! but can also make a new extract from IPUMS with BPLD var  
+ddi_extract <- read_ipums_ddi("/data/josh/CenSoc/censoc_data/ipums_1940_extract/fullcount.ddi.xml")
+
+## rename our bpl var to match the IPUMS var BPLD
+
+## assign metadata using ipumsr package
+dmf <- ipums_collect(data = dmf, ddi = ddi_extract, var_attrs = c("val_labels", "var_label", "var_desc"))
+
+## create new string variable bpl_string 
+dmf <- dmf %>% 
+  mutate(bpl_string = as_factor(BPLD))
+```
+
+
+```{r}
+## clean names 
+dmf <- dmf %>% 
+  janitor::clean_names() %>% 
+  mutate(ownership = relevel(as.factor(ownershp), ref = "2")) %>% 
+  filter(ownership != 0)
+  
+## own home 
+ownhome <- dmf %>% 
+  filter(relate == 1) %>% 
+  group_by(byear, race) %>% 
+  summarize(ownhome = mean(ownership == 1))
+  
+## create plot 
+ownhome_plot <- ownhome %>% 
+  filter(byear %in% 1880:1920) %>% 
+  mutate(in_sample = case_when(
+    byear %in% 1905:1915 ~ "yes",
+    TRUE ~ "no",
+  )) %>% 
+  ggplot(aes(x = byear, y = ownhome, fill = in_sample)) + 
+  geom_point(size=4, aes(shape=in_sample))+
+  theme_cowplot(20) + 
+  scale_shape_manual(values=c(2,17) , guide = "none") + 
+  ylim(0, 1) +
+  labs(x = "Birth Cohort",
+       y = "Own Home") + 
+  theme(legend.position = "none")
+
+ggsave(ownhome_plot, filename = "figures/home_ownership_rate_1940.png", width = 9, height = 6)
+```
+
+
+
+```{r}
+## calculate home ownership for Blacks and whites 
+ownhome_bw <- dmf %>% 
+  filter(relate == 1 & race %in% c(1, 2)) %>% 
+  group_by(byear, race) %>% 
+  summarize(ownhome = mean(ownership == 1))
+  
+## create home ownership plot for Blacks and whites 
+ownhome_plot_bw <- ownhome_bw %>% 
+  mutate(Race = case_when(
+    race == 1 ~ "White",
+    race == 2 ~ "Black"
+  )) %>% 
+  filter(byear %in% 1880:1920) %>% 
+  mutate(in_sample = case_when(
+    byear %in% 1905:1915 ~ "yes",
+    TRUE ~ "no",
+  )) %>% 
+  ggplot(aes(x = byear, y = ownhome)) + 
+  geom_point(size=4, aes(shape = in_sample, color = Race))+
+  theme_cowplot(20) + 
+  scale_shape_manual(values=c(2,17)) + 
+  ylim(0, 1) +
+  labs(x = "Birth Cohort",
+       y = "Own Home") + 
+  ggsci::scale_color_lancet() + 
+  theme(legend.position = "bottom") + 
+  guides(shape = "none") 
+
+
+ggsave(ownhome_plot_bw, filename = "figures/home_ownership_rate_1940_bw.png", width = 9, height = 6)
+```
+
+
+```{r}
+ownhome_bw %>% 
+    mutate(race = case_when(
+    race == 1 ~ "White",
+    race == 2 ~ "Black"
+  )) %>% 
+  filter(byear %in% 1880:1920) %>% 
+  pivot_wider(names_from = race, values_from = ownhome) %>% 
+  mutate(ratio = White / Black) %>% 
+  ggplot(aes(x = byear, y = ratio)) + 
+  geom_point() +
+  geom_line() + 
+  theme_cowplot() + 
+  ylim(0, 2.3)
+```
+

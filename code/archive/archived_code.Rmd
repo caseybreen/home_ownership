@@ -1,0 +1,116 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Archived code. 
+
+```{r}
+dmf_analysis <- dmf_analysis %>% 
+  mutate(statefip_string = as_factor(statefip))
+
+dmf_homeownership <- dmf_analysis %>% 
+  group_by(statefip) %>% 
+  filter(n() > 65405) %>% 
+  do(fitHour = tidy(feols(death_age ~ ownership | byear + urban + occ + race,  data = .))) %>% 
+  unnest(fitHour) %>% 
+  mutate(data = "DMF") 
+
+dmf_homeownership <- dmf_homeownership %>% 
+  mutate(statefip_string = as_factor(statefip))
+
+dmf_homeownership %>% 
+  filter(term == "ownership1") %>% 
+  arrange(desc(std.error))
+
+top_10 <- dmf_homeownership %>% 
+  filter(term == "ownership1") %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  mutate(method = "OLS") %>% 
+  ggplot(aes(x = reorder(statefip_string, estimate), y = e65, ymin = lower, ymax = upper)) + 
+  geom_pointrange() + 
+  theme_cowplot() + 
+  coord_flip() + 
+  labs(x = "",
+       y = "Additional Years of life",
+       title = "Home Ownership and Longevity",
+       subtitle = "Largest 10 States by Population") + 
+  ggsci::scale_color_lancet() + 
+  theme(legend.position = "NULL") + 
+  ylim(0, 0.6)
+
+ggsave(plot = top_10, "figures/top_10.png", width = 9, height = 5)
+
+```
+
+
+```{r}
+library(maps)
+
+dmf_homeownership <- dmf_analysis %>% 
+  filter(relate == 1) %>% 
+  group_by(statefip_string) %>% 
+  do(fitHour = tidy(feols(death_age ~ ownership | byear,  data = .))) %>% 
+  unnest(fitHour) %>% 
+  mutate(data = "DMF") %>% 
+  mutate(years = estimate)
+
+us_states <- map_data("state")
+
+dmf_homeownership$region <- tolower(dmf_homeownership$statefip_string)
+
+
+us_states_elec <- left_join(us_states, dmf_homeownership) %>% 
+  filter(term == "ownership1")
+
+p <- ggplot(us_states_elec,  
+            aes(x = long, y = lat,
+                group = group, fill = estimate))
+
+map <- p + geom_polygon(color = "gray90", size = 0.1) +
+    coord_map(projection = "albers", lat0 = 39, lat1 = 45) + 
+  scale_fill_viridis_c(option = "B") + 
+  theme_map() 
+
+
+ggsave(plot = map, "figures/map.png", width = 7, height = 5)
+```
+
+
+
+```{r}
+plot_grid(map, top_10, nrow = 2)
+```
+
+```{r}
+dmf_analysis_sibs %>% 
+  group_by(ownership) %>% 
+  summarize(mean(byear))
+  
+
+dmf_analysis_sibs %>%
+  filter(byear %in% 1910:1912) %>% 
+  select(SERIALP, death_age, ownership) %>% 
+  mutate(ownership = case_when(
+    ownership == 1 ~ "own",
+    ownership == 2 ~ "rent"
+  )) %>% 
+  group_by(SERIALP) %>%
+  filter(n() == 2) %>%
+  filter(n_distinct(ownership) == 2) %>% 
+  pivot_wider(names_from = ownership, values_from = death_age) %>% 
+  ungroup() %>% 
+  summarize(mean(rent), mean(own))
+
+
+dmf_analysis_sibs %>%
+  filter(byear %in% 1910:1912) %>% 
+    group_by(ownership) %>% 
+  summarize(mean(byear))
+```
+
+
+
+
