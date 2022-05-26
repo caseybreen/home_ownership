@@ -37,9 +37,8 @@ dmf <- dmf %>%
 ```
 
 
-
-
 ```{r}
+## dmf analysis 
 dmf_analysis <- dmf %>% 
   filter(byear %in% 1905:1915) %>% 
   janitor::clean_names() %>% 
