@@ -19,7 +19,7 @@ library(fixest)
 
 ```{r}
 ## read in full dmf 
-dmf <- fread("/data/josh/CenSoc/censoc_data/censoc_linked_to_census/censoc_dmf_v2_linked.csv")
+dmf <- fread("/censoc/data/censoc_v2.1/censoc_dmf_v2.1.csv")
 
 ## read in IPUMS DDI for IPUMS extract
 ## we already have a ddi on the server for all vars! but can also make a new extract from IPUMS with BPLD var  
