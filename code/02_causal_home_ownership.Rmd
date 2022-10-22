@@ -46,7 +46,6 @@ dmf <- dmf %>%
 ## read in sibling mortality data 
 dmf_sibs <- fread(here("data/censoc_sibs.csv")) %>% 
   janitor::clean_names()
-
 ```
 
 
@@ -91,31 +90,30 @@ pooled_effect %>%
 
 
 ```{r}
-dmf_analysis_sibs <- mortality_data %>% 
-  mutate(ownership = relevel(as.factor(ownershp), ref = "2")) %>% 
+dmf_analysis_sibs <- dmf_sibs %>% 
+  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   filter(ownership != 0) %>% 
-  filter(relate == 1) %>% 
+  filter(relate == 101) %>% 
   group_by(serialp) %>% 
   filter(n() > 1) %>% 
-  censocdev::recode_education(educ_var = educd)
+  censocdev::recode_education(educ_var = educ)
 
 dmf_analysis_sibs <- dmf_analysis_sibs %>% 
   arrange(byear) %>% 
   mutate(birth_order = row_number()) %>% ungroup()
  
 model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs)
-model2 <- feols(death_age ~ ownership + educ_yrs | byear + educ_yrs + urban + occ + race + marst + statefip,  data = dmf_analysis_sibs)
-model3 <- feols(death_age ~ ownership + educ_yrs | byear + educ_yrs + urban + occ + race + marst + statefip + serialp + birth_order,  data = dmf_analysis_sibs)
+model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip,  data = dmf_analysis_sibs)
+model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp + birth_order,  data = dmf_analysis_sibs)
 
 
 results <- tidy(model1) %>% mutate(model = "Baseline") %>% 
   bind_rows(tidy(model2) %>% mutate(model = "Baseline + Controls")) %>% 
   bind_rows(tidy(model3) %>% mutate(model = "Baseline + Controls + Sibling FE")) %>% 
-  filter(term == "ownership1")
+  filter(term == "ownership10")
 
 
 home_ownership_regression_plot <- results %>% 
-    filter(term == "ownership1") %>% 
   mutate(e65 = estimate,
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
@@ -134,7 +132,7 @@ home_ownership_regression_plot <- results %>%
 # subtitle = "CenSoc-DMF cohorts of 1905-1915, Men-Only"
 
 
-ggsave(plot = home_ownership_regression_plot, "figures/home_ownership_models.pdf", width = 9, height = 5)
+# ggsave(plot = home_ownership_regression_plot, "figures/home_ownership_models.pdf", width = 9, height = 5)
 ```
 
 
@@ -161,7 +159,6 @@ dmf_analysis_sibs_homevalue <- dmf_analysis_sibs %>%
 tidy(feols(death_age ~  as.factor(value_decile)   |  educ_yrs + byear,  data = dmf_analysis_sibs_homevalue))
 
   
-
 feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs %>% filter(byear %in% 1905:1910))
 
 feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs %>% filter(byear %in% 1910:1915))

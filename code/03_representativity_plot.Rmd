@@ -19,7 +19,13 @@ library(gt)
 
 ```{r}
 sib_file <- fread(here("data/censoc_sibs.csv")) %>% 
-  janitor::clean_names()
+  janitor::clean_names() %>% 
+  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
+  filter(ownership != 0) %>% 
+  filter(relate == 101) %>% 
+  group_by(serialp) %>% 
+  filter(n() > 1) %>% 
+  censocdev::recode_education(educ_var = educ)
 ```
 
 

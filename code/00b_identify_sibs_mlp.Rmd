@@ -1,0 +1,51 @@
+---
+title: "R Notebook"
+author: Casey Breen
+---
+
+Summary: This notebook contains code to identify brothers in the 1940 census. Specifically, we link the 1940 census to the 1920 census using ABE linkages.
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(here)
+```
+
+
+```{r}
+## read in ABE crosswalk 
+xwalk_1920_1940 <- fread(here("data/mlp_crosswalk_1920_1940.csv")) 
+
+## read in 1920 census 
+census_1920 <- fread("/home/ipums/casey-ipums/IPUMS2019/1920/TSV/P.tsv", select = c("AGE", "SEX", "HISTID", "SERIALP")) %>% 
+  janitor::clean_names()
+
+censoc_dmf <- fread("/censoc/data/censoc_linked_with_census/1940_v2.1/censoc_dmf_v2_1_linked_with_census.csv")
+```
+
+
+```{r}
+
+## restrict to male agge 5:15 
+siblings_1920 <- census_1920 %>% 
+  filter(age %in% c(5:16)) %>% 
+  filter(sex == 1)
+
+siblings_matched <- siblings_1920 %>% 
+  inner_join(xwalk_1920_1940, by = c("histid" = "histid_1920")) 
+
+censoc_dmf_linked <- censoc_dmf %>% 
+  rename(serialp_1940 = serialp) %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+  inner_join(siblings_matched, by = c("histid" = "histid_1940")) 
+
+censoc_dmf_linked_sibs_final <- censoc_dmf_linked %>% 
+  filter(byear %in% 1905:1915) %>% 
+  group_by(serialp) %>% 
+  filter(n() > 1) %>% 
+  ungroup()
+
+## write out data file 
+fwrite(censoc_dmf_linked_sibs_final, here("data/censoc_sibs_mlp.csv"))
+```
+
