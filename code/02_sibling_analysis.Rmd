@@ -1,0 +1,206 @@
+---
+title: "Home Ownership Analysis"
+author: Casey Breen
+---
+
+
+Summary: Create causal estimates of association between home ownership and longevity using sibling-based fixed effects models. 
+
+
+## Library packages 
+
+```{r}
+## library packages
+library(data.table)
+library(tidyverse)
+library(ipumsr)
+library(socviz)
+library(broom)
+library(cowplot)
+library(fixest)
+library(here)
+```
+
+
+## Read in data 
+
+```{r}
+## read in sibling mortality data 
+dmf_sibs <- fread(here("data/censoc_sibs.csv")) %>% 
+  janitor::clean_names()
+```
+
+## Standard ABE models (pooled, pooled adjusted, sib-FE adjusted)
+
+```{r}
+dmf_analysis_sibs <- dmf_sibs %>% 
+  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
+  filter(ownership != 0) %>% 
+  filter(relate == 101) %>% 
+  group_by(serialp_1920) %>% 
+  filter(n() > 1) %>% 
+  censocdev::recode_education(educ_var = educ)
+
+dmf_analysis_sibs <- dmf_analysis_sibs %>% 
+  arrange(byear) %>% 
+  mutate(birth_order = row_number()) %>% ungroup()
+ 
+model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs)
+model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip,  data = dmf_analysis_sibs)
+model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order,  data = dmf_analysis_sibs)
+
+results <- tidy(model1) %>% mutate(model = "Baseline") %>% 
+  bind_rows(tidy(model2) %>% mutate(model = "Baseline + Controls")) %>% 
+  bind_rows(tidy(model3) %>% mutate(model = "Baseline + Controls + Sibling FE")) %>% 
+  filter(term == "ownership10")
+
+home_ownership_regression_plot <- results %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  mutate(method = "OLS") %>% 
+  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper)) + 
+  geom_line() + 
+  geom_pointrange(size = 1.1) + 
+  theme_cowplot() + 
+  ylim(0, 0.9) + 
+  labs(x = "Model",
+       y = "Additional Years of Life") + 
+  ggsci::scale_color_lancet() + 
+  theme(legend.position = "NULL")
+
+# title = "Relationship between Home Ownership and Longevity",
+# subtitle = "CenSoc-DMF cohorts of 1905-1915, Men-Only"
+
+
+ggsave(plot = home_ownership_regression_plot, "figures/home_ownership_models.pdf", width = 9, height = 5)
+```
+
+## Causal ABE models (pooled, pooled adjusted, sib-FE adjusted)
+
+```{r}
+dmf_analysis_sibs_conservative <- dmf_sibs %>% 
+  filter(link_abe_exact_conservative_1940_dmf == 1 & link_abe_exact_conservative_1920_1940 == 1) %>% 
+  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
+  filter(ownership != 0) %>% 
+  filter(relate == 101) %>% 
+  group_by(serialp_1920) %>% 
+  filter(n() > 1) %>% 
+  censocdev::recode_education(educ_var = educ)
+
+dmf_analysis_sibs_conservative <- dmf_analysis_sibs_conservative %>% 
+  arrange(byear) %>% 
+  mutate(birth_order = row_number()) %>% ungroup()
+ 
+model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs_conservative)
+model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip,  data = dmf_analysis_sibs_conservative)
+model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order,  data = dmf_analysis_sibs_conservative)
+
+results_conservative <- tidy(model1) %>% mutate(model = "Baseline") %>% 
+  bind_rows(tidy(model2) %>% mutate(model = "Baseline + Controls")) %>% 
+  bind_rows(tidy(model3) %>% mutate(model = "Baseline + Controls + Sibling FE")) %>% 
+  filter(term == "ownership10")
+
+home_ownership_regression_conservative_plot <- results_conservative %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  mutate(method = "OLS") %>% 
+  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper)) + 
+  geom_line() + 
+  geom_pointrange(size = 1.1) + 
+  theme_cowplot() + 
+  ylim(0, 0.9) + 
+  labs(x = "Model",
+       y = "Additional Years of Life") + 
+  ggsci::scale_color_lancet() + 
+  theme(legend.position = "NULL")
+
+# title = "Relationship between Home Ownership and Longevity",
+# subtitle = "CenSoc-DMF cohorts of 1905-1915, Men-Only"
+
+
+ggsave(plot = home_ownership_regression_conservative_plot, "figures/home_ownership_models_conservative.pdf", width = 9, height = 5)
+```
+
+## Value of home analysis (sib FE)
+
+```{r}
+model1 <- feols(death_age ~ ownership + valueh | byear,  data = dmf_analysis_sibs %>% filter(valueh %in% c(1:90000)))
+
+tidy(feols(death_age ~  valueh | byear,  data = dmf_analysis_sibs %>% filter(valueh %in% c(1:9000))))
+
+dmf_analysis_sibs %>% 
+  filter(valueh %in% c(0:9000)) %>% 
+  ggplot() +
+  geom_histogram(aes(x = valueh),
+                 bins = 10, 
+                 color = "black",
+                 fill = "grey") + 
+  theme_cowplot()
+
+dmf_analysis_sibs_homevalue <- dmf_analysis_sibs %>% 
+  filter(valueh %in% c(0:9000)) %>% 
+  mutate(value_decile = ntile(valueh, 2)) 
+
+tidy(feols(death_age ~  as.factor(value_decile)   |  educ_yrs + byear,  data = dmf_analysis_sibs_homevalue))
+
+  
+feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs %>% filter(byear %in% 1905:1910))
+
+feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs %>% filter(byear %in% 1910:1915))
+
+
+dmf_analysis_sibs %>% 
+  filter(valueh %in% c(0:9000)) %>% 
+  mutate(valueh_split = ntile(valueh, 3)) %>% 
+  mutate(home_own_value = case_when(
+    valueh_split == 1 ~ 1,
+    valueh_split == 2 ~ 2,
+    valueh_split == 3 ~ 3,
+    TRUE ~ 0
+  ))
+
+dmf_analysis_sibs <- dmf_analysis_sibs %>% 
+  mutate(ownership_value = case_when(
+    ownership == 10 & valueh %in% c(0:1000) ~ 1,
+    ownership == 10 & valueh %in% c(1001:2700) ~ 2,
+    ownership == 10 & valueh %in% c(2700:9000) ~ 3,
+    TRUE ~ 0
+    ))
+
+model3 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order,  data = dmf_analysis_sibs))
+
+home_ownership_homevalue_plot <- model3 %>% 
+  mutate(term = case_when(
+    term == "as.factor(ownership_value)1" ~ "Home Value ($1-$1,000)",
+    term == "as.factor(ownership_value)2" ~ "Home Value ($1,001-$2,700)",
+    term == "as.factor(ownership_value)3" ~ "Home Value ($2,700+)"
+  )) %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  mutate(method = "OLS") %>% 
+  ggplot(aes(x = term, y = e65, ymin = lower, ymax = upper)) + 
+  geom_line() + 
+  geom_pointrange(size = 1.1) + 
+  theme_cowplot() + 
+  ylim(0, 0.9) + 
+  labs(x = "Model",
+       y = "Additional Years of Life") + 
+  ggsci::scale_color_lancet() + 
+  theme(legend.position = "NULL")
+
+ggsave(plot = home_ownership_homevalue_plot, "figures/home_ownership_homevalue_plot.png", width = 9, height = 5)
+```
+
+## Number of discordant sibships 
+
+```{r}
+dmf_analysis_sibs %>% 
+  group_by(serialp_1920) %>% 
+  summarize(distinct = n_distinct(ownershp)) %>% 
+  count(distinct) %>% 
+  summarize(prop = n / sum(n))
+```
+

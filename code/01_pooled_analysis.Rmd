@@ -1,0 +1,115 @@
+---
+title: "Descriptive Statistics"
+author: Casey Breen
+---
+
+Summary: Create descriptive statistics for home ownership and mortality paper 
+
+```{r}
+## library packages 
+library(data.table)
+library(tidyverse)
+library(ipumsr)
+library(socviz)
+library(broom)
+library(cowplot)
+library(fixest)
+```
+
+## read in data 
+
+```{r}
+## read in dmf 
+dmf <- fread("/censoc/data/censoc_linked_with_census/1940_v2.1/censoc_dmf_v2_1_linked_with_census.csv")
+
+## recode some variables 
+dmf <- dmf %>% 
+  mutate(bpld = bpl) %>% 
+  janitor::clean_names(case = "all_caps")
+
+## read in IPUMS DDI for IPUMS extract
+## we already have a ddi on the server for all vars! but can also make a new extract from IPUMS with BPLD var  
+ddi_extract <- read_ipums_ddi("/data/josh/CenSoc/censoc_data/ipums_1940_extract/fullcount.ddi.xml")
+
+## rename our bpl var to match the IPUMS var BPLD
+
+## assign metadata using ipumsr package
+dmf <- ipums_collect(data = dmf, ddi = ddi_extract, var_attrs = c("val_labels", "var_label", "var_desc"))
+
+## create new string variable bpl_string 
+dmf <- dmf %>% 
+  mutate(bpl_string = as_factor(BPLD)) %>% 
+  janitor::clean_names()
+```
+
+## Black-White Home Ownership Plots 
+
+```{r}
+## calculate home ownership for Blacks and whites 
+ownhome_bw <- dmf %>% 
+  filter(relate == 101 & race %in% c(100, 200)) %>% 
+  group_by(byear, race) %>% 
+  summarize(ownhome = mean(ownership == 10))
+  
+## create home ownership plot for Blacks and whites 
+ownhome_plot_bw <- ownhome_bw %>% 
+  mutate(Race = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black"
+  )) %>% 
+  filter(byear %in% 1880:1920) %>% 
+  mutate(in_sample = case_when(
+    byear %in% 1905:1915 ~ "yes",
+    TRUE ~ "no",
+  )) %>% 
+  ggplot(aes(x = byear, y = ownhome)) + 
+  geom_point(size=4, aes(shape = in_sample, color = Race))+
+  theme_cowplot(20) + 
+  scale_shape_manual(values=c(2,17)) + 
+  ylim(0, 1) +
+  labs(x = "Birth Cohort",
+       y = "Own Home (%)") + 
+  ggsci::scale_color_lancet() + 
+  theme(legend.position = "bottom") + 
+  guides(shape = "none") 
+
+## ggsave 
+ggsave(ownhome_plot_bw, filename = "figures/home_ownership_rate_1940_bw.png", width = 9, height = 6)
+```
+
+
+
+```{r}
+## dmf household head 
+dmf_hhead <- dmf %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+  filter(relate == 101) %>% 
+  filter(ownership != 0) %>% 
+  filter(bpl < 15000) %>% 
+  filter(byear %in% 1905:1915)
+
+## [pp;ed effects white 
+pooled_effect <- tidy(fixest::feols(death_age ~ ownership | byear, dmf_hhead  %>% filter(race == 100))) %>% 
+  mutate(type = "White Americans") 
+
+## pooled effects blacks
+pooled_effect_black <- tidy(fixest::feols(death_age ~ ownership | byear, dmf_hhead %>% filter(race == 200))) %>% 
+  mutate(type = "Black Americans") 
+
+## pooled effects 
+bw_differences_homeown_longevity <- pooled_effect %>% 
+  bind_rows(pooled_effect_black) %>% 
+  ggplot(aes(x = type, y = estimate, 
+             ymin = estimate + 1.96*std.error,
+             ymax = estimate - 1.96*std.error)) + 
+  geom_pointrange() + 
+  theme_cowplot() + 
+  ylim(0, 1) + 
+  labs(x = "",
+       y = "Difference in Life Expectancy",
+       title = "Association between Homeownership and Longevity") 
+
+ggsave(bw_differences_homeown_longevity, filename = "figures/bw_differences_longevity.png", width = 9, height = 6)
+```
+
+
