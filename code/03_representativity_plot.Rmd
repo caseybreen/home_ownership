@@ -1,7 +1,8 @@
 ---
 title: "Representativity Plots"
 ---
-Summary: Create plots of representativity 
+
+Summary: Create plots assessing how representative our samples are of the general population. 
 
 ```{r}
 ## library packages
@@ -23,7 +24,7 @@ sib_file <- fread(here("data/censoc_sibs.csv")) %>%
   mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   filter(ownership != 0) %>% 
   filter(relate == 101) %>% 
-  group_by(serialp) %>% 
+  group_by(serialp_1920) %>% 
   filter(n() > 1) %>% 
   censocdev::recode_education(educ_var = educ)
 ```
