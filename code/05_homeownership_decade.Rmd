@@ -3,6 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+Summary: Estimate home ownership across census decades. 
 
 ```{r}
 library(data.table)

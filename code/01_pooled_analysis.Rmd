@@ -48,8 +48,8 @@ dmf <- dmf %>%
 ## calculate home ownership for Blacks and whites 
 ownhome_bw <- dmf %>% 
   filter(relate == 101 & race %in% c(100, 200)) %>% 
-  group_by(byear, race) %>% 
-  summarize(ownhome = mean(ownership == 10))
+  group_by(age, race) %>% 
+  summarize(ownhome = mean(ownershp == 10))
   
 ## create home ownership plot for Blacks and whites 
 ownhome_plot_bw <- ownhome_bw %>% 
@@ -57,18 +57,19 @@ ownhome_plot_bw <- ownhome_bw %>%
     race == 100 ~ "White",
     race == 200 ~ "Black"
   )) %>% 
-  filter(byear %in% 1880:1920) %>% 
+  filter(age %in% 20:60) %>% 
   mutate(in_sample = case_when(
-    byear %in% 1905:1915 ~ "yes",
+    age %in% 25:35 ~ "yes",
     TRUE ~ "no",
   )) %>% 
-  ggplot(aes(x = byear, y = ownhome)) + 
+  ggplot(aes(x = age, y = ownhome)) + 
   geom_point(size=4, aes(shape = in_sample, color = Race))+
   theme_cowplot(20) + 
   scale_shape_manual(values=c(2,17)) + 
   ylim(0, 1) +
-  labs(x = "Birth Cohort",
-       y = "Own Home (%)") + 
+  labs(x = "Age",
+       y = "Own Home (%)",
+       title = "Homeownership Rates in 1940 by Age") + 
   ggsci::scale_color_lancet() + 
   theme(legend.position = "bottom") + 
   guides(shape = "none") 
@@ -78,38 +79,54 @@ ggsave(ownhome_plot_bw, filename = "figures/home_ownership_rate_1940_bw.png", wi
 ```
 
 
-
+## association between home ownership and longevity 
 ```{r}
 ## dmf household head 
 dmf_hhead <- dmf %>% 
   filter(link_abe_exact_conservative == 1) %>% 
   filter(relate == 101) %>% 
+  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   filter(ownership != 0) %>% 
   filter(bpl < 15000) %>% 
   filter(byear %in% 1905:1915)
 
-## [pp;ed effects white 
+## pooled effects white 
 pooled_effect <- tidy(fixest::feols(death_age ~ ownership | byear, dmf_hhead  %>% filter(race == 100))) %>% 
-  mutate(type = "White Americans") 
+  mutate(type = "White Americans",
+         model = "Baseline") 
+
+pooled_effect_controls <- tidy(feols(death_age ~ ownership  | byear + educ + urban + occ + race + marst + statefip, dmf_hhead  %>% filter(race == 100))) %>% 
+  mutate(type = "White Americans",
+         model = "Baseline + Controls") 
 
 ## pooled effects blacks
 pooled_effect_black <- tidy(fixest::feols(death_age ~ ownership | byear, dmf_hhead %>% filter(race == 200))) %>% 
-  mutate(type = "Black Americans") 
+  mutate(type = "Black Americans",
+         model = "Baseline") 
+
+pooled_effect_controls_black <- tidy(feols(death_age ~ ownership  | byear + educ + urban + occ + race + marst + statefip, dmf_hhead  %>% filter(race == 200))) %>% 
+  mutate(type = "Black Americans",
+         model = "Baseline + Controls") 
 
 ## pooled effects 
 bw_differences_homeown_longevity <- pooled_effect %>% 
+  bind_rows(pooled_effect_controls) %>% 
   bind_rows(pooled_effect_black) %>% 
-  ggplot(aes(x = type, y = estimate, 
+  bind_rows(pooled_effect_controls_black) %>% 
+  ggplot(aes(x = model, y = estimate, color = type,
              ymin = estimate + 1.96*std.error,
              ymax = estimate - 1.96*std.error)) + 
-  geom_pointrange() + 
+  geom_pointrange(position = position_dodge2(.2)) + 
   theme_cowplot() + 
   ylim(0, 1) + 
+  ggsci::scale_color_lancet() + 
   labs(x = "",
        y = "Difference in Life Expectancy",
-       title = "Association between Homeownership and Longevity") 
+       title = "Association between Homeownership and Longevity") +
+  theme(legend.position = "bottom", 
+        legend.title=element_blank())
 
-ggsave(bw_differences_homeown_longevity, filename = "figures/bw_differences_longevity.png", width = 9, height = 6)
+ggsave(bw_differences_homeown_longevity, filename = "figures/bw_differences_longevity.png", width = 7, height = 5)
 ```
 
 
