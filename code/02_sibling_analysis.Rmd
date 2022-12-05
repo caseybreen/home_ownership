@@ -168,7 +168,7 @@ home_ownership_regression_conservative_plot <- results_conservative %>%
 # subtitle = "CenSoc-DMF cohorts of 1905-1915, Men-Only"
 
 
-ggsave(plot = home_ownership_regression_conservative_plot, "figures/home_ownership_models_conservative.pdf", width = 6, height = 4)
+ggsave(plot = home_ownership_regression_conservative_plot, "figures/home_ownership_models_conservative.png", width = 6, height = 4)
 ```
 
 ## Value of home analysis (sib FE)
