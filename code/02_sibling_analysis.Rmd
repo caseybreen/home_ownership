@@ -73,7 +73,7 @@ home_ownership_regression_plot <- results %>%
 # subtitle = "CenSoc-DMF cohorts of 1905-1915, Men-Only"
 
 
-ggsave(plot = home_ownership_regression_plot, "figures/home_ownership_models.pdf", width = 9, height = 5)
+ggsave(plot = home_ownership_regression_plot, "figures/home_ownership_models.png", width = 9, height = 5)
 ```
 
 ## Causal ABE models (pooled, pooled adjusted, sib-FE adjusted)
@@ -120,7 +120,7 @@ home_ownership_regression_conservative_plot <- results_conservative %>%
 # subtitle = "CenSoc-DMF cohorts of 1905-1915, Men-Only"
 
 
-ggsave(plot = home_ownership_regression_conservative_plot, "figures/home_ownership_models_conservative.pdf", width = 9, height = 5)
+ggsave(plot = home_ownership_regression_conservative_plot, "figures/home_ownership_models_conservative.png", width = 9, height = 5)
 ```
 
 ## Value of home analysis (sib FE)
@@ -183,7 +183,7 @@ home_ownership_homevalue_plot <- model3 %>%
   mutate(method = "OLS") %>% 
   ggplot(aes(x = term, y = e65, ymin = lower, ymax = upper)) + 
   geom_line() + 
-  geom_pointrange(size = 1.1) + 
+  geom_pointrange(size = .7) + 
   theme_cowplot() + 
   ylim(0, 0.9) + 
   labs(x = "Model",
