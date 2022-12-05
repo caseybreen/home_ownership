@@ -26,7 +26,7 @@ library(here)
 
 ```{r}
 ## read in sibling mortality data 
-dmf_sibs <- fread(here("data/censoc_sibs.csv")) %>% 
+dmf_sibs <- fread(here("code/analysis_file/censoc_analysis_sibs.csv")) %>% 
   janitor::clean_names()
 ```
 
@@ -38,55 +38,101 @@ dmf_analysis_sibs <- dmf_sibs %>%
   filter(ownership != 0) %>% 
   filter(relate == 101) %>% 
   group_by(serialp_1920) %>% 
-  filter(n() > 1) %>% 
-  censocdev::recode_education(educ_var = educ)
+  filter(n() > 1) 
 
 dmf_analysis_sibs <- dmf_analysis_sibs %>% 
+  group_by(serialp_1920) %>% 
   arrange(byear) %>% 
   mutate(birth_order = row_number()) %>% ungroup()
  
-model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs)
-model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip,  data = dmf_analysis_sibs)
-model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order,  data = dmf_analysis_sibs)
+model1 <- feols(death_age ~ ownership | byear, data = dmf_analysis_sibs)
+model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip, data = dmf_analysis_sibs)
+model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)
 
-results <- tidy(model1) %>% mutate(model = "Baseline") %>% 
-  bind_rows(tidy(model2) %>% mutate(model = "Baseline + Controls")) %>% 
-  bind_rows(tidy(model3) %>% mutate(model = "Baseline + Controls + Sibling FE")) %>% 
-  filter(term == "ownership10")
+## model 1 
+results <- tidy(model1) %>% mutate(model = "No Controls") %>% 
+ add_row(model = "Controls", estimate = NA, std.error = NA) %>% 
+ add_row(model = "Controls + Sibling FE", estimate = NA, std.error = NA) %>% 
+  mutate(model = factor(model, levels= c("No Controls", "Controls", "Controls + Sibling FE")))
 
-home_ownership_regression_plot <- results %>% 
+home_ownership_regression_plot1 <- results %>% 
   mutate(e65 = estimate,
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
   mutate(method = "OLS") %>% 
-  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper)) + 
+  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
   geom_line() + 
-  geom_pointrange(size = 1.1) + 
+  geom_pointrange(size = 1) + 
   theme_cowplot() + 
-  ylim(0, 0.9) + 
+  ylim(-0.2, 0.9) + 
   labs(x = "Model",
        y = "Additional Years of Life") + 
-  ggsci::scale_color_lancet() + 
-  theme(legend.position = "NULL")
+  ggsci::scale_color_aaas() + 
+  theme(legend.position = "NULL") +
+   annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
+  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
 
-# title = "Relationship between Home Ownership and Longevity",
-# subtitle = "CenSoc-DMF cohorts of 1905-1915, Men-Only"
+## model 2 
+results <- tidy(model1) %>% mutate(model = "No Controls") %>% 
+  bind_rows(tidy(model2) %>% mutate(model = "Controls")) %>% 
+ add_row(model = "Controls + Sibling FE", estimate = NA, std.error = NA) %>% 
+  mutate(model = factor(model, levels= c("No Controls", "Controls", "Controls + Sibling FE")))
 
+home_ownership_regression_plot2 <- results %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  mutate(method = "OLS") %>% 
+  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
+  geom_line() + 
+  geom_pointrange(size = 1) + 
+  theme_cowplot() + 
+  ylim(-0.2, 0.9) + 
+  labs(x = "Model",
+       y = "Additional Years of Life") + 
+  ggsci::scale_color_aaas() + 
+  theme(legend.position = "NULL") +
+   annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
+  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
 
-ggsave(plot = home_ownership_regression_plot, "figures/home_ownership_models.pdf", width = 9, height = 5)
+## model 3 
+results <- tidy(model1) %>% mutate(model = "No Controls") %>% 
+  bind_rows(tidy(model2) %>% mutate(model = "Controls")) %>% 
+  bind_rows(tidy(model3) %>% mutate(model = "Controls + Sibling FE")) %>% 
+  mutate(model = factor(model, levels= c("No Controls", "Controls", "Controls + Sibling FE")))
+
+home_ownership_regression_plot3 <- results %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  mutate(method = "OLS") %>% 
+  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
+  geom_line() + 
+  geom_pointrange(size = 1) + 
+  theme_cowplot() + 
+  ylim(-0.2, 0.9) + 
+  labs(x = "Model",
+       y = "Additional Years of Life") + 
+  ggsci::scale_color_aaas() + 
+  theme(legend.position = "NULL") +
+   annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
+  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
+
+ggsave(plot = home_ownership_regression_plot1, "figures/home_ownership_models1.png", width = 6, height = 4)
+ggsave(plot = home_ownership_regression_plot2, "figures/home_ownership_models2.png", width = 6, height = 4)
+ggsave(plot = home_ownership_regression_plot3, "figures/home_ownership_models3.png", width = 6, height = 4)
 ```
 
 ## Causal ABE models (pooled, pooled adjusted, sib-FE adjusted)
 
 ```{r}
-dmf_analysis_sibs_conservative <- dmf_sibs %>% 
+dmf_analysis_sibs_conservative <- dmf_analysis_sibs %>% 
   filter(link_abe_exact_conservative_1940_dmf == 1 & link_abe_exact_conservative_1920_1940 == 1) %>% 
   mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   filter(ownership != 0) %>% 
   filter(relate == 101) %>% 
   group_by(serialp_1920) %>% 
-  filter(n() > 1) %>% 
-  censocdev::recode_education(educ_var = educ)
+  filter(n() > 1) 
 
 dmf_analysis_sibs_conservative <- dmf_analysis_sibs_conservative %>% 
   arrange(byear) %>% 
@@ -96,111 +142,283 @@ model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs_conserv
 model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip,  data = dmf_analysis_sibs_conservative)
 model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order,  data = dmf_analysis_sibs_conservative)
 
-results_conservative <- tidy(model1) %>% mutate(model = "Baseline") %>% 
-  bind_rows(tidy(model2) %>% mutate(model = "Baseline + Controls")) %>% 
-  bind_rows(tidy(model3) %>% mutate(model = "Baseline + Controls + Sibling FE")) %>% 
-  filter(term == "ownership10")
+results_conservative <- tidy(model1) %>% mutate(model = "No Controls") %>% 
+  bind_rows(tidy(model2) %>% mutate(model = "Controls")) %>% 
+  bind_rows(tidy(model3) %>% mutate(model = "Controls + Sibling FE")) %>% 
+  mutate(model = factor(model, levels= c("No Controls", "Controls", "Controls + Sibling FE")))
 
 home_ownership_regression_conservative_plot <- results_conservative %>% 
   mutate(e65 = estimate,
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
   mutate(method = "OLS") %>% 
-  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper)) + 
+  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
   geom_line() + 
-  geom_pointrange(size = 1.1) + 
+  geom_pointrange(size = 1) + 
   theme_cowplot() + 
-  ylim(0, 0.9) + 
+  ylim(-0.2, 0.9) + 
   labs(x = "Model",
        y = "Additional Years of Life") + 
-  ggsci::scale_color_lancet() + 
-  theme(legend.position = "NULL")
+  ggsci::scale_color_aaas() + 
+  theme(legend.position = "NULL") +
+   annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
+  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
 
 # title = "Relationship between Home Ownership and Longevity",
 # subtitle = "CenSoc-DMF cohorts of 1905-1915, Men-Only"
 
 
-ggsave(plot = home_ownership_regression_conservative_plot, "figures/home_ownership_models_conservative.pdf", width = 9, height = 5)
+ggsave(plot = home_ownership_regression_conservative_plot, "figures/home_ownership_models_conservative.pdf", width = 6, height = 4)
 ```
 
 ## Value of home analysis (sib FE)
 
 ```{r}
-model1 <- feols(death_age ~ ownership + valueh | byear,  data = dmf_analysis_sibs %>% filter(valueh %in% c(1:90000)))
-
-tidy(feols(death_age ~  valueh | byear,  data = dmf_analysis_sibs %>% filter(valueh %in% c(1:9000))))
-
-dmf_analysis_sibs %>% 
-  filter(valueh %in% c(0:9000)) %>% 
-  ggplot() +
-  geom_histogram(aes(x = valueh),
-                 bins = 10, 
-                 color = "black",
-                 fill = "grey") + 
-  theme_cowplot()
-
-dmf_analysis_sibs_homevalue <- dmf_analysis_sibs %>% 
-  filter(valueh %in% c(0:9000)) %>% 
-  mutate(value_decile = ntile(valueh, 2)) 
-
-tidy(feols(death_age ~  as.factor(value_decile)   |  educ_yrs + byear,  data = dmf_analysis_sibs_homevalue))
-
-  
-feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs %>% filter(byear %in% 1905:1910))
-
-feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs %>% filter(byear %in% 1910:1915))
-
-
-dmf_analysis_sibs %>% 
-  filter(valueh %in% c(0:9000)) %>% 
-  mutate(valueh_split = ntile(valueh, 3)) %>% 
-  mutate(home_own_value = case_when(
-    valueh_split == 1 ~ 1,
-    valueh_split == 2 ~ 2,
-    valueh_split == 3 ~ 3,
-    TRUE ~ 0
-  ))
-
-dmf_analysis_sibs <- dmf_analysis_sibs %>% 
+dmf_analysis_sibs_new <- dmf_analysis_sibs %>% 
+  filter(ownership != 10 | valueh != 9999998) %>% 
   mutate(ownership_value = case_when(
-    ownership == 10 & valueh %in% c(0:1000) ~ 1,
-    ownership == 10 & valueh %in% c(1001:2700) ~ 2,
-    ownership == 10 & valueh %in% c(2700:9000) ~ 3,
+    ownership == 10 & valueh %in% c(1:700) ~ 1,
+    ownership == 10 & valueh %in% c(700:2000) ~ 2,
+    ownership == 10 & valueh %in% c(2000:3500) ~ 3,
+    ownership == 10 & valueh %in% c(3500:10000) ~ 4,
     TRUE ~ 0
     ))
 
-model3 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order,  data = dmf_analysis_sibs))
+## run models 
+model1 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear,  data = dmf_analysis_sibs_new)) %>% mutate(model = "No Controls")
+model2 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear + educ_yrs + urban + occ + race + marst + statefip,  data = dmf_analysis_sibs_new)) %>% mutate(model = "Controls")
+model3 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920,  data = dmf_analysis_sibs_new)) %>% mutate(model = "Controls + Sibling FE")
 
-home_ownership_homevalue_plot <- model3 %>% 
+## effect heterogeneity 
+home_ownership_homevalue_plot_1models <- model3 %>% 
+  # bind_rows(model2) %>% 
+  # bind_rows(model1) %>% 
   mutate(term = case_when(
-    term == "as.factor(ownership_value)1" ~ "Home Value ($1-$1,000)",
-    term == "as.factor(ownership_value)2" ~ "Home Value ($1,001-$2,700)",
-    term == "as.factor(ownership_value)3" ~ "Home Value ($2,700+)"
+    term == "as.factor(ownership_value)1" ~ "Q1 (Low)",
+    term == "as.factor(ownership_value)2" ~ "Q2",
+    term == "as.factor(ownership_value)3" ~ "Q3",
+    term == "as.factor(ownership_value)4" ~ "Q4 (High)"
   )) %>% 
   mutate(e65 = estimate,
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
-  mutate(method = "OLS") %>% 
-  ggplot(aes(x = term, y = e65, ymin = lower, ymax = upper)) + 
-  geom_line() + 
-  geom_pointrange(size = 1.1) + 
+  ggplot(aes(x = term, y = e65, ymin = lower, ymax = upper, group = model, color = model, shape = model)) + 
+  geom_pointrange(size = 0.7, position = position_dodge2(.1)) + 
+  geom_line(alpha = 0.6, linetype = "dashed") + 
   theme_cowplot() + 
-  ylim(0, 0.9) + 
-  labs(x = "Model",
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey") + 
+  labs(x = "Home Value Quartile",
        y = "Additional Years of Life") + 
-  ggsci::scale_color_lancet() + 
-  theme(legend.position = "NULL")
+ #  ggsci::scale_color_lancet() + 
+  scale_color_manual(values = c("Controls + Sibling FE" = "#008B45FF")) + 
+  # scale_color_viridis_d(option = "m") + 
+  theme(legend.position = "bottom") + 
+    annotate("text", x = 3.5, y = -.05, label = "Renters",
+  parse = TRUE)
 
-ggsave(plot = home_ownership_homevalue_plot, "figures/home_ownership_homevalue_plot.png", width = 9, height = 5)
+ggsave(plot = home_ownership_homevalue_plot_1models, "figures/home_ownership_homevalue_plot_1models.png", width = 6, height = 4)
+
+## effect heterogeneity 
+home_ownership_homevalue_plot_3models <- model1 %>% 
+  bind_rows(model2) %>% 
+  bind_rows(model3) %>% 
+  mutate(term = case_when(
+    term == "as.factor(ownership_value)1" ~ "Q1 (Low)",
+    term == "as.factor(ownership_value)2" ~ "Q2",
+    term == "as.factor(ownership_value)3" ~ "Q3",
+    term == "as.factor(ownership_value)4" ~ "Q4 (High)"
+  )) %>% 
+  mutate(model = factor(model, levels= c("No Controls", "Controls", "Controls + Sibling FE"))) %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  ggplot(aes(x = term, y = e65, ymin = lower, ymax = upper, group = model, color = model, shape = model)) + 
+  geom_pointrange(size = 0.7, position = position_dodge2(.1)) + 
+  geom_line(alpha = 0.6, linetype = "dashed") + 
+  theme_cowplot() + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey") + 
+    ggsci::scale_color_aaas() + 
+  labs(x = "Home Value Quartile",
+       y = "Additional Years of Life") + 
+  # scale_color_viridis_d(option = "m") + 
+  theme(legend.position = "bottom") + 
+    annotate("text", x = 3.5, y = -.05, label = "Renters",
+  parse = TRUE)
+
+ggsave(plot = home_ownership_homevalue_plot_3models, "figures/home_ownership_homevalue_plot_3models.png", width = 6, height = 4)
 ```
 
-## Number of discordant sibships 
+## discordant siblings 
 
 ```{r}
+## Number of discordant sibships 
 dmf_analysis_sibs %>% 
   group_by(serialp_1920) %>% 
   summarize(distinct = n_distinct(ownershp)) %>% 
   count(distinct) %>% 
   summarize(prop = n / sum(n))
+```
+
+
+## Full Rgression Models 
+
+```{r}
+dmf_analysis_sibs <- dmf_analysis_sibs %>% 
+  mutate(racec = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  ))
+
+model1 <- feols(death_age ~ ownership | byear, data = dmf_analysis_sibs)
+model2 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear  + occ +   + marst + statefip, data = dmf_analysis_sibs)
+model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)
+
+etable(model1, model2, model3, tex = T)
+```
+
+
+## Sensitivity analysis 
+
+```{r}
+subgroup <- dmf_analysis_sibs %>% 
+  group_by(serialp_1920) %>% 
+  filter(n_distinct(countyicp) == 1) 
+
+model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = subgroup)
+
+subgroup_lowedu <- dmf_analysis_sibs %>% 
+  filter(educ_yrs < 9) %>% 
+  group_by(serialp_1920) %>% 
+  filter(n() >= 1)
+
+subgroup_highedu <- dmf_analysis_sibs %>% 
+  filter(educ_yrs >= 9) %>% 
+  group_by(serialp_1920) %>% 
+  filter(n() >= 1)
+
+model_highedu <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = subgroup_highedu)
+
+model_lowedu <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = subgroup_lowedu)
+
+
+subgroup <- dmf_analysis_sibs %>%
+  filter(!is.na(educ_yrs)) %>% 
+  group_by(serialp_1920) %>% 
+  filter(n_distinct(countyicp) == 1) %>% 
+  group_by(serialp_1920) %>% 
+  mutate(educ_range = max(educ_yrs) - min(educ_yrs)) %>% 
+  mutate(byear_range = max(byear) - min(byear)) %>% 
+  filter(educ_range < 3) %>% 
+  filter(byear_range < 3)
+
+model_similar_edu <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = subgroup)
+
+model_similar_edu <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = subgroup)
+
+
+## byear restriction 
+byear_restrict_df <- dmf_analysis_sibs %>%
+   group_by(serialp_1920) %>% 
+   mutate(byear_range = max(byear) - min(byear)) %>% 
+   filter(byear_range < 6)
+
+model_similar_edu <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = byear_restrict_df)) %>% mutate(model = "Birth Year Restriction")
+
+## county restriction 
+county_restriction_df <- dmf_analysis_sibs %>% 
+  group_by(serialp_1920) %>% 
+  filter(n_distinct(countyicp) == 1) %>% 
+  ungroup()
+
+model_county <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = county_restriction_df)) %>% mutate(model = "County Restriction")
+
+## marital status restriction 
+marst_restriction_df <- dmf_analysis_sibs %>% 
+  group_by(serialp_1920) %>% 
+  filter(n_distinct(marst) == 1) %>% 
+  ungroup()
+
+marst_similar_model <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = marst_restriction_df)) %>% mutate(model = "Marital Status Restriction")
+
+
+## education status restriction 
+educ_restriction_df <- dmf_analysis_sibs %>% 
+  group_by(serialp_1920) %>% 
+  mutate(educ_range = max(educ_yrs) - min(educ_yrs)) %>% 
+  filter(educ_range < 3) %>% 
+  ungroup()
+
+educ_similar_model <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = educ_restriction_df)) %>% mutate(model = "Education Restriction")
+
+
+full_restrictions <- dmf_analysis_sibs %>% 
+  group_by(serialp_1920) %>% 
+  mutate(byear_range = max(byear) - min(byear)) %>% 
+  mutate(educ_range = max(educ_yrs) - min(educ_yrs)) %>% 
+  filter(byear_range < 6) %>% 
+  filter(educ_range < 3) %>% 
+  filter(n_distinct(countyicp) == 1) %>% 
+  filter(n_distinct(marst) == 1)
+
+full_restrictions_model <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = full_restrictions)) %>% mutate(model = "All Restrictions ")
+
+results_robustness <- model_similar_edu %>% 
+  bind_rows(model_county) %>% 
+  bind_rows(marst_similar_model) %>% 
+  bind_rows(educ_similar_model) %>% 
+  bind_rows(full_restrictions_model)
+
+sensitivity_analysis_plots <- results_robustness %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  mutate(method = "OLS") %>% 
+  ggplot(aes(y = model, x = e65, xmin = lower, xmax = upper)) + 
+  geom_line() + 
+  geom_pointrange(size = 0.7) + 
+  theme_cowplot() + 
+  xlim(-.3, 0.9) + 
+  labs(x = "Additional Years of Life",
+       y = "") + 
+  ggsci::scale_color_lancet() + 
+  geom_vline( xintercept = 0.400182, linetype = "dashed") + 
+  theme(legend.position = "NULL") + 
+  annotate("text", x = .05, y = 2.5, label = "Renters", fontface = 'italic', angle='90') + 
+  geom_vline(xintercept = 0, color = "grey", linetype =  "dashed") + 
+  annotate("text", x = .45, y = 2.5, label = "Full Sample", fontface = 'italic', angle='90') 
+
+
+# title = "Relationship between Home Ownership and Longevity",
+# subtitle = "CenSoc-DMF cohorts of 1905-1915, Men-Only"
+
+ggsave(plot = sensitivity_analysis_plots, "figures/home_ownership_sensitivity_analyses.png", width = 7, height = 5.5)
+
+```
+
+
+```{r}
+results_sensitivity_byear <- list()
+  
+for (i in 1:5) {
+  
+## byear restriction 
+byear_restrict_df <- dmf_analysis_sibs %>%
+    filter(byear >= 1904 + i & byear <= 1904 + 4 + i) %>% 
+   group_by(serialp_1920) %>% 
+  filter(n() > 1)
+  
+
+results_sensitivity_byear[[i]] <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = byear_restrict_df)) %>% mutate(model = "byear restriction") %>% 
+  mutate(byear = paste0(1904 + i, ", ", 1905 + 4 + i))
+}
+
+
+bind_rows(results_sensitivity_byear) %>% 
+  ggplot(aes(x = byear, y = estimate, ymin = estimate - std.error, ymax = estimate + std.error)) + 
+  geom_pointrange() + 
+  theme_cowplot() + 
+   annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
+  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
 ```
 
