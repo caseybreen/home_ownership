@@ -31,7 +31,7 @@ censoc_dmf <- fread("/censoc/data/censoc_linked_with_census/1940_v2.1/censoc_dmf
 ```{r}
 ## identify men age 5-16 in the 1940 census 
 siblings_1920 <- census_1920 %>% 
-  filter(age %in% c(5:16)) %>% 
+  filter(age %in% c(3:17)) %>% 
   filter(sex == 1) %>% 
   rename_all(paste0, "_1920")
 
