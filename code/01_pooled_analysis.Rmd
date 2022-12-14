@@ -6,7 +6,7 @@ author: Casey Breen
 Summary: Create descriptive statistics for home ownership and mortality paper 
 
 ```{r}
-## library packages 
+## library packages
 library(data.table)
 library(tidyverse)
 library(ipumsr)
@@ -19,16 +19,16 @@ library(fixest)
 ## read in data 
 
 ```{r}
-## read in dmf 
+## read in dmf
 dmf <- fread("/censoc/data/censoc_linked_with_census/1940_v2.1/censoc_dmf_v2_1_linked_with_census.csv")
 
-## recode some variables 
-dmf <- dmf %>% 
-  mutate(bpld = bpl) %>% 
+## recode some variables
+dmf <- dmf %>%
+  mutate(bpld = bpl) %>%
   janitor::clean_names(case = "all_caps")
 
 ## read in IPUMS DDI for IPUMS extract
-## we already have a ddi on the server for all vars! but can also make a new extract from IPUMS with BPLD var  
+## we already have a ddi on the server for all vars! but can also make a new extract from IPUMS with BPLD var
 ddi_extract <- read_ipums_ddi("/data/josh/CenSoc/censoc_data/ipums_1940_extract/fullcount.ddi.xml")
 
 ## rename our bpl var to match the IPUMS var BPLD
@@ -36,168 +36,182 @@ ddi_extract <- read_ipums_ddi("/data/josh/CenSoc/censoc_data/ipums_1940_extract/
 ## assign metadata using ipumsr package
 dmf <- ipums_collect(data = dmf, ddi = ddi_extract, var_attrs = c("val_labels", "var_label", "var_desc"))
 
-## create new string variable bpl_string 
-dmf <- dmf %>% 
-  mutate(bpl_string = as_factor(BPLD)) %>% 
+## create new string variable bpl_string
+dmf <- dmf %>%
+  mutate(bpl_string = as_factor(BPLD)) %>%
   janitor::clean_names()
 ```
 
 ## Black-White Home Ownership Plots 
 
 ```{r}
-## calculate home ownership for Blacks and whites 
-ownhome_bw <- dmf %>% 
-  filter(relate == 101 & race %in% c(100, 200)) %>% 
-  group_by(age, race) %>% 
+## calculate home ownership for Blacks and whites
+ownhome_bw <- dmf %>%
+  filter(relate == 101 & race %in% c(100, 200)) %>%
+  group_by(age, race) %>%
   summarize(ownhome = mean(ownershp == 10))
-  
-## create home ownership plot for Blacks and whites 
-ownhome_plot_bw <- ownhome_bw %>% 
+
+## create home ownership plot for Blacks and whites
+ownhome_plot_bw <- ownhome_bw %>%
   mutate(Race = case_when(
     race == 100 ~ "White",
     race == 200 ~ "Black"
-  )) %>% 
-  filter(age %in% 20:60) %>% 
+  )) %>%
+  filter(age %in% 20:60) %>%
   mutate(in_sample = case_when(
     age %in% 25:35 ~ "yes",
     TRUE ~ "no",
-  )) %>% 
-  ggplot(aes(x = age, y = ownhome)) + 
-  geom_point(size=4, aes(shape = in_sample, color = Race))+
-  theme_cowplot(20) + 
-  scale_shape_manual(values=c(2,17)) + 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1)) + 
-  labs(x = "Age",
-       y = "Ownership Rate") + 
-  ggsci::scale_color_lancet() + 
-  theme(legend.position = "bottom") + 
-  guides(shape = "none") 
+  )) %>%
+  ggplot(aes(x = age, y = ownhome)) +
+  geom_point(size = 4, aes(shape = in_sample, color = Race)) +
+  theme_cowplot(20) +
+  scale_shape_manual(values = c(2, 17)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1)) +
+  labs(
+    x = "Age",
+    y = "Ownership Rate"
+  ) +
+  ggsci::scale_color_lancet() +
+  theme(legend.position = "bottom") +
+  guides(shape = "none")
 
-## ggsave 
+## ggsave
 ggsave(ownhome_plot_bw, filename = "figures/home_ownership_rate_1940_bw.png", width = 9, height = 6)
 ```
 
 
-## association between home ownership and longevity 
+## Association between home ownership and longevity 
 ```{r}
-## dmf household head 
-dmf_hhead <- dmf %>% 
-  filter(relate == 101) %>% 
-  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
-  filter(ownership != 0) %>% 
-  filter(bpl < 15000) %>% 
+## dmf household head
+dmf_hhead <- dmf %>%
+  filter(relate == 101) %>%
+  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>%
+  filter(ownership != 0) %>%
+  filter(bpl < 15000) %>%
   filter(byear %in% 1905:1915 & age %in% 22:37)
 
-## pooled effects white 
-pooled_effect <- tidy(fixest::feols(death_age ~ ownership | byear, dmf_hhead  %>% filter(race == 100))) %>% 
-  mutate(type = "White Americans",
-         model = "No Controls") 
+## pooled effects white
+pooled_effect <- tidy(fixest::feols(death_age ~ ownership | byear, dmf_hhead %>% filter(race == 100))) %>%
+  mutate(
+    type = "White Americans",
+    model = "No Controls"
+  )
 
-## pooled effects whites with controls 
-pooled_effect_controls <- tidy(feols(death_age ~ ownership  | byear + educ + urban + occ + race + marst + statefip, dmf_hhead  %>% filter(race == 100))) %>% 
-  mutate(type = "White Americans",
-         model = "Controls") 
+## pooled effects whites with controls
+pooled_effect_controls <- tidy(feols(death_age ~ ownership | byear + educ + urban + occ + race + marst + statefip, dmf_hhead %>% filter(race == 100))) %>%
+  mutate(
+    type = "White Americans",
+    model = "Controls"
+  )
 
 ## pooled effects blacks
 pooled_effect_black <- tidy(fixest::feols(death_age ~ ownership | byear, dmf_hhead %>% filter(race == 200))) %>%
-  mutate(type = "Black Americans",
-         model = "No Controls") 
+  mutate(
+    type = "Black Americans",
+    model = "No Controls"
+  )
 
-## pooled effects blacks with controls 
-pooled_effect_controls_black <- tidy(feols(death_age ~ ownership  | byear + educ + urban + occ + race + marst + statefip, dmf_hhead  %>% filter(race == 200))) %>%
-  mutate(type = "Black Americans",
-         model = "Controls") 
+## pooled effects blacks with controls
+pooled_effect_controls_black <- tidy(feols(death_age ~ ownership | byear + educ + urban + occ + race + marst + statefip, dmf_hhead %>% filter(race == 200))) %>%
+  mutate(
+    type = "Black Americans",
+    model = "Controls"
+  )
 
-## pooled effects 
-bw_differences_homeown_longevity <- pooled_effect %>% 
-  bind_rows(pooled_effect_controls) %>% 
-  bind_rows(pooled_effect_black) %>% 
-  bind_rows(pooled_effect_controls_black) %>% 
-  ggplot(aes(x = reorder(model, -estimate), y = estimate, color = rev(model), shape = type, linetype = rev(type),
-             ymin = estimate + 1.96*std.error,
-             ymax = estimate - 1.96*std.error)) + 
-  geom_pointrange(size = 1, position = position_dodge2(.2)) + 
-  theme_cowplot() + 
-  ylim(-0.2, 1) + 
-  geom_hline(yintercept = 0, linetype = "dashed", color = "grey") + 
-  annotate("text", x = 1.5, y = -.05, label = "Renters", fontface = 'italic') + 
-  ggsci::scale_color_lancet(guide = "none") + 
-  labs(x = "",
-       y = "Difference in Life Expectancy",
-       title = "") +
-  theme(legend.position = "bottom", 
-        legend.title=element_blank()) + 
+## pooled effects
+bw_differences_homeown_longevity <- pooled_effect %>%
+  bind_rows(pooled_effect_controls) %>%
+  bind_rows(pooled_effect_black) %>%
+  bind_rows(pooled_effect_controls_black) %>%
+  ggplot(aes(
+    x = reorder(model, -estimate), y = estimate, color = rev(model), shape = type, linetype = rev(type),
+    ymin = estimate + 1.96 * std.error,
+    ymax = estimate - 1.96 * std.error
+  )) +
+  geom_pointrange(size = 1, position = position_dodge2(.2)) +
+  theme_cowplot() +
+  ylim(-0.2, 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
+  annotate("text", x = 1.5, y = -.05, label = "Renters", fontface = "italic") +
+  ggsci::scale_color_lancet(guide = "none") +
+  labs(
+    x = "",
+    y = "Difference in Life Expectancy",
+    title = ""
+  ) +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank()
+  ) +
   guides(linetype = "none")
 
-## save plot 
+## save plot
 ggsave(bw_differences_homeown_longevity, filename = "figures/home_ownership_mortality_association_bw.png", width = 7, height = 5)
 ```
 
 ## Homeownership prob by educational attainment  
 
-```{r}ccx
-## dmf probability by education attainment 
-dmf_hhead <- dmf_hhead %>% 
+```{r}
+## dmf probability by education attainment
+dmf_hhead <- dmf_hhead %>%
   mutate(ownership_dummy = case_when(
     ownership == 10 ~ 1,
     TRUE ~ 0
-  )) %>% 
-  censocdev::recode_education(educ_var = educ) %>% 
-  mutate(educ_yrs_factor = as.factor(educ_yrs)) %>% 
+  )) %>%
+  censocdev::recode_education(educ_var = educ) %>%
+  mutate(educ_yrs_factor = as.factor(educ_yrs)) %>%
   mutate(educ_categorical = case_when(
     educ_yrs %in% 0:5 ~ "No Elementary",
     educ_yrs %in% 6:7 ~ "Elementary",
     educ_yrs %in% 8:11 ~ "Middle School",
     educ_yrs %in% 12:15 ~ "High School",
     educ_yrs %in% 16:18 ~ "College+",
-  )) %>% 
-  mutate(educ_categorical = as.factor(educ_categorical)) %>% 
+  )) %>%
+  mutate(educ_categorical = as.factor(educ_categorical)) %>%
   mutate(educ_categorical = relevel(educ_categorical, ref = "No Elementary"))
 
 ## linear probability model
-pooled_effect <- tidy(fixest::feols(ownership_dummy ~ educ_categorical | byear + farm + statefip + urban, dmf_hhead)) %>% 
-  filter(term != "(Intercept)") %>% 
+pooled_effect <- tidy(fixest::feols(ownership_dummy ~ educ_categorical | byear + farm + statefip + urban, dmf_hhead)) %>%
+  filter(term != "(Intercept)") %>%
   mutate(term = str_remove(term, "educ_categorical"))
 
-pooled_effect %>% 
-  mutate(educ_categorical = factor(term, levels= rev(c("College+", "High School", "Middle School", "Elementary", "No Elementary")))) %>% 
-  # mutate(term = as.numeric(str_extract(term, "[[:digit:]]+"))) %>% 
-  ggplot() + 
-  geom_pointrange(aes(x = educ_categorical, y = estimate, ymin = estimate -1.96*std.error, ymax = estimate + 1.96*std.error)) + 
-  theme_cowplot()  +
+pooled_effect %>%
+  mutate(educ_categorical = factor(term, levels = rev(c("College+", "High School", "Middle School", "Elementary", "No Elementary")))) %>%
+  # mutate(term = as.numeric(str_extract(term, "[[:digit:]]+"))) %>%
+  ggplot() +
+  geom_pointrange(aes(x = educ_categorical, y = estimate, ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error)) +
+  theme_cowplot() +
   ylim(0, .15)
-
 ```
 ## Homeownership rates by income decile 
 
 ```{r}
 
-## take income deciles 
-dmf_hhead <- dmf_hhead %>% 
-  mutate(empstat == 10) %>% 
-  filter(incwage %in% c(1:5005)) %>% 
+## take income deciles
+dmf_hhead <- dmf_hhead %>%
+  mutate(empstat == 10) %>%
+  filter(incwage %in% c(1:5005)) %>%
   mutate(incwage_decile = as.factor(ntile(incwage, 10)))
 
-pooled_effect <- tidy(fixest::feols(ownership_dummy ~ incwage_decile | byear, dmf_hhead)) %>% 
-    mutate(term = as.numeric(str_extract(term, "[[:digit:]]+"))) %>% 
-   ggplot() + 
-  geom_pointrange(aes(x = term, y = estimate, ymin = estimate -1.96*std.error, ymax = estimate + 1.96*std.error)) + 
-  theme_cowplot() 
+pooled_effect <- tidy(fixest::feols(ownership_dummy ~ incwage_decile | byear, dmf_hhead)) %>%
+  mutate(term = as.numeric(str_extract(term, "[[:digit:]]+"))) %>%
+  ggplot() +
+  geom_pointrange(aes(x = term, y = estimate, ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error)) +
+  theme_cowplot()
 
 
 logistic <- glm(ownership_dummy ~ incwage_decile + as.factor(byear), data = dmf_hhead, family = "binomial")
 
-## linear increase between home ownership and income 
+## linear increase between home ownership and income
 tidy(logistic, exponentiate = T) %>%
-  filter(str_detect(term, "incwage")) %>% 
-    mutate(term = as.numeric(str_extract(term, "[[:digit:]]+"))) %>% 
-   ggplot() + 
-  geom_pointrange(aes(x = as.factor(term), y = estimate, ymin = estimate -1.96*std.error, ymax = estimate + 1.96*std.error)) +
-  theme_cowplot() + 
-  ylim(.95, 1.8) + 
-  labs(x = "Income Decile",
-       y = "Exponentiated Odds Ratio")
-
+  filter(str_detect(term, "incwage")) %>%
+  mutate(term = as.numeric(str_extract(term, "[[:digit:]]+"))) %>%
+  ggplot() +
+  geom_pointrange(aes(x = as.factor(term), y = estimate, ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error)) +
+  theme_cowplot() +
+  ylim(.95, 1.8) +
+  labs(
+    x = "Income Decile",
+    y = "Exponentiated Odds Ratio"
+  )
 ```
-
-
