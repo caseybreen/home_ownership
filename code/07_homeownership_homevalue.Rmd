@@ -80,8 +80,8 @@ home_ownership_homevalue_plot_1models <- model3 %>%
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
   ggplot(aes(x = term, y = e65, ymin = lower, ymax = upper, group = model, color = model, shape = model)) + 
+    geom_line(alpha = 0.6, linetype = "dashed") + 
   geom_pointrange(size = 0.7,  fill = "white", shape = 21, position = position_dodge2(.1)) + 
-  geom_line(alpha = 0.6, linetype = "dashed") + 
   theme_cowplot() + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") + 
   labs(x = "Home Value Quartile",
@@ -92,7 +92,6 @@ home_ownership_homevalue_plot_1models <- model3 %>%
   theme(legend.position = "bottom") + 
   annotate("text", x = 3.5, y = -.05, label = "Renters",
            parse = TRUE)
-
 
 ## effect heterogeneity 
 home_ownership_homevalue_plot_3models <- model1 %>% 
@@ -109,8 +108,8 @@ home_ownership_homevalue_plot_3models <- model1 %>%
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
   ggplot(aes(x = term, y = e65, ymin = lower, ymax = upper, group = model, color = model, shape = model)) + 
+    geom_line(alpha = 0.6, linetype = "dashed") + 
   geom_pointrange(size = 0.7,  fill = "white", shape = 21, position = position_dodge2(.1)) + 
-  geom_line(alpha = 0.6, linetype = "dashed") + 
   theme_cowplot() + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") + 
   scale_color_manual(values = cud) + 
