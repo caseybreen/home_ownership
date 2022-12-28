@@ -124,16 +124,17 @@ bw_differences_homeown_longevity <- pooled_effect %>%
   bind_rows(pooled_effect_black) %>%
   bind_rows(pooled_effect_controls_black) %>%
   ggplot(aes(
-    x = reorder(model, -estimate), y = estimate, color = rev(model), shape = type, linetype = rev(type),
+    x = reorder(model, -estimate), y = estimate, color = rev(model), shape = type,
     ymin = estimate + 1.96 * std.error,
     ymax = estimate - 1.96 * std.error
   )) +
-  geom_pointrange(size = 1, position = position_dodge2(.2)) +
+  geom_pointrange(size = 0.7,  fill = "white", position = position_dodge2(.12)) +
   theme_cowplot() +
   ylim(-0.2, 1) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
   annotate("text", x = 1.5, y = -.05, label = "Renters", fontface = "italic") +
-  ggsci::scale_color_lancet(guide = "none") +
+  scale_shape_manual(values = c(21, 23)) + 
+  scale_color_manual(values = cud) + 
   labs(
     x = "",
     y = "Difference in Life Expectancy",
@@ -143,7 +144,7 @@ bw_differences_homeown_longevity <- pooled_effect %>%
     legend.position = "bottom",
     legend.title = element_blank()
   ) +
-  guides(linetype = "none")
+  guides(linetype = "none", color = "none") 
 
 ## save plot
 ggsave(bw_differences_homeown_longevity, filename = "figures/home_ownership_mortality_association_bw.png", width = 7, height = 5)
