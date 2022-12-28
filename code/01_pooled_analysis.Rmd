@@ -128,7 +128,7 @@ bw_differences_homeown_longevity <- pooled_effect %>%
     ymin = estimate + 1.96 * std.error,
     ymax = estimate - 1.96 * std.error
   )) +
-  geom_pointrange(size = 0.7,  fill = "white", position = position_dodge2(.12)) +
+  geom_pointrange(size = 0.7,  fill = "white", position = position_dodge2(.16)) +
   theme_cowplot() +
   ylim(-0.2, 1) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
@@ -147,7 +147,7 @@ bw_differences_homeown_longevity <- pooled_effect %>%
   guides(linetype = "none", color = "none") 
 
 ## save plot
-ggsave(bw_differences_homeown_longevity, filename = "figures/home_ownership_mortality_association_bw.png", width = 7, height = 5)
+ggsave(bw_differences_homeown_longevity, filename = "figures/home_ownership_mortality_association_bw.png", width = 6, height = 4)
 ```
 
 ## Homeownership prob by educational attainment  
