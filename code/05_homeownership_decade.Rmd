@@ -6,21 +6,23 @@ output: html_notebook
 Summary: Estimate home ownership across census decades. 
 
 ```{r}
+## Library Packages 
 library(data.table)
 library(tidyverse)
 library(here)
 library(ggrepel)
+library(cowplot)
 ```
 
 
 
 ```{r}
-## 1940 census 
+## Read in 1940 census 
 census_1940_h <- fread("/home/ipums/casey-ipums/IPUMS2019/1940/TSV/H.tsv", select = c("SERIAL", "OWNERSHP")) 
 census_1940_p <- fread("/home/ipums/casey-ipums/IPUMS2019/1940/TSV/P.tsv", select = c("SERIALP", "RACE", "AGE", "SEX", "RELATE")) 
 census_1940 <- inner_join(census_1940_p, census_1940_h, by = c("SERIALP" = "SERIAL")) %>% janitor::clean_names()
 
-## recode 1940 census 
+## Recode 1940 census 
 census_1940 <- census_1940 %>% 
   janitor::clean_names() %>% 
   mutate(race = case_when(
@@ -39,22 +41,24 @@ census_1940 <- census_1940 %>%
   filter(!is.na(age_cat)) %>% 
   filter(!is.na(race))
 
-## tabulate 
+## Tabulate by race and age 
 tabs_1940_bw_age <- census_1940 %>% 
   group_by(age_cat, race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
   
+## Full tabulation 
 tabs_1940_bw <- census_1940 %>% 
   group_by(race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
 
-## drop vars 
+## Drop big census files  
 rm(census_1940_h, census_1940_p)
 ```
 
 
 
 ```{r}
+## Read in 1930 Census 
 census_1930_h <- fread("/home/ipums/casey-ipums/IPUMS2019/1930/TSV/H.tsv", select = c("SERIAL", "OWNERSHP"))
 census_1930_p <- fread("/home/ipums/casey-ipums/IPUMS2019/1930/TSV/P.tsv", select = c("SERIALP", "RACE", "AGE", "SEX", "RELATE"))
 census_1930 <- inner_join(census_1930_p, census_1930_h, by = c("SERIALP" = "SERIAL"))
@@ -79,26 +83,28 @@ census_1930 <- census_1930 %>%
   filter(!is.na(age_cat)) %>% 
   filter(!is.na(race))
 
-## tabulate 
+## tabulate by race and age 
 tabs_1930_bw_age <- census_1930 %>% 
   group_by(age_cat, race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
   
+## tabulate
 tabs_1930_bw <- census_1930 %>% 
   group_by(race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
 
-## drop vars 
+## drop big census files  
 rm(census_1930_h, census_1930_p)
 ```
 
 ```{r}
+## Read in 1920 Census 
 census_1920_h <- fread("/home/ipums/casey-ipums/IPUMS2019/1920/TSV/H.tsv", select = c("SERIAL", "OWNERSHP"))
 census_1920_p <- fread("/home/ipums/casey-ipums/IPUMS2019/1920/TSV/P.tsv", select = c("SERIALP", "RACE", "AGE", "SEX", "RELATE"))
 census_1920 <- inner_join(census_1920_p, census_1920_h, by = c("SERIALP" = "SERIAL"))
 
 
-## recode 1940 census 
+## Recode 1940 census 
 census_1920 <- census_1920 %>% 
   janitor::clean_names() %>% 
   mutate(race = case_when(
@@ -117,26 +123,29 @@ census_1920 <- census_1920 %>%
   filter(!is.na(age_cat)) %>% 
   filter(!is.na(race))
 
-## tabulate 
+## Tabulate by race and age 
 tabs_1920_bw_age <- census_1920 %>% 
   group_by(age_cat, race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
   
+## Tabulate by race 
 tabs_1920_bw <- census_1920 %>% 
   group_by(race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
 
+## Drop big census files  
 rm(census_1920_h, census_1920_p)
 ```
 
 
 ```{r}
+## Read in 1910 Census 
 census_1910_h <- fread("/home/ipums/casey-ipums/IPUMS2019/1910/TSV/H.tsv", select = c("SERIAL", "OWNERSHP"))
 census_1910_p <- fread("/home/ipums/casey-ipums/IPUMS2019/1910/TSV/P.tsv", select = c("SERIALP", "RACE", "AGE", "SEX", "RELATE"))
 census_1910 <- inner_join(census_1910_p, census_1910_h, by = c("SERIALP" = "SERIAL"))
 
 
-## recode 1940 census 
+## Recode 1940 census 
 census_1910 <- census_1910 %>% 
   janitor::clean_names() %>% 
   mutate(race = case_when(
@@ -155,26 +164,29 @@ census_1910 <- census_1910 %>%
   filter(!is.na(age_cat)) %>% 
   filter(!is.na(race))
 
-## tabulate 
+## Tabulate by race and age 
 tabs_1910_bw_age <- census_1910 %>% 
   group_by(age_cat, race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
   
+## Tabulate by race 
 tabs_1910_bw <- census_1910 %>% 
   group_by(race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
 
+## Drop big census files  
 rm(census_1910_h, census_1910_p)
 ```
 
 
 ```{r}
+## Read in 1900 Census 
 census_1900_h <- fread("/home/ipums/casey-ipums/IPUMS2019/1900/TSV/H.tsv", select = c("SERIAL", "OWNERSHP"))
 census_1900_p <- fread("/home/ipums/casey-ipums/IPUMS2019/1900/TSV/P.tsv", select = c("SERIALP", "RACE", "AGE", "SEX", "RELATE"))
 census_1900 <- inner_join(census_1900_p, census_1900_h, by = c("SERIALP" = "SERIAL"))
 
 
-## recode 1940 census 
+## Recode 1940 census 
 census_1900 <- census_1900 %>% 
   janitor::clean_names() %>% 
   mutate(race = case_when(
@@ -193,66 +205,31 @@ census_1900 <- census_1900 %>%
   filter(!is.na(age_cat)) %>% 
   filter(!is.na(race))
 
-## tabulate 
+## Tabulate by race and age 
 tabs_1900_bw_age <- census_1900 %>% 
   group_by(age_cat, race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
-  
+ 
+## Tabulate by race
 tabs_1900_bw <- census_1900 %>% 
   group_by(race) %>% 
   summarize(ownershp_avg = mean(ownershp == 10))
 
+## Drop big census files  
 rm(census_1900_h, census_1900_p)
 ```
 
+## Create homeownership plot by race 
 
 ```{r}
-census_1880_h <- fread("/home/ipums/casey-ipums/IPUMS2019/1880/TSV/H.tsv", select = c("SERIAL", "OWNERSHP"))
-census_1890_p <- fread("/home/ipums/casey-ipums/IPUMS2019/1900/TSV/P.tsv", select = c("SERIALP", "RACE", "AGE", "SEX", "RELATE"))
-census_1900 <- inner_join(census_1900_p, census_1900_h, by = c("SERIALP" = "SERIAL"))
-
-
-## recode 1940 census 
-census_1900 <- census_1900 %>% 
-  janitor::clean_names() %>% 
-  mutate(race = case_when(
-    race == 100 ~ "White",
-    race == 200 ~ "Black"
-  )) %>% 
-  filter(relate == 101 & sex == 1) %>% 
-  mutate(age_cat = case_when(
-    age %in% 18:24 ~ "[18, 25)",
-    age %in% 25:34 ~ "[25, 35)",
-    age %in% 35:44 ~ "[35, 45)",
-    age %in% 45:54 ~ "[45, 55)",
-    age %in% 55:64 ~ "[55, 64)",
-    age  >= 65 ~ "65+"
-  )) %>% 
-  filter(!is.na(age_cat)) %>% 
-  filter(!is.na(race))
-
-## tabulate 
-tabs_1900_bw_age <- census_1900 %>% 
-  group_by(age_cat, race) %>% 
-  summarize(ownershp_avg = mean(ownershp == 10))
-  
-tabs_1900_bw <- census_1900 %>% 
-  group_by(race) %>% 
-  summarize(ownershp_avg = mean(ownershp == 10))
-
-rm(census_1900_h, census_1900_p)
-```
-
-
-
-```{r}
+## Combine estimates  
 bw_tabs <- tabs_1940_bw %>% mutate(year = 1940) %>% 
   bind_rows(tabs_1930_bw %>% mutate(year = 1930)) %>%
   bind_rows(tabs_1920_bw %>% mutate(year = 1920)) %>% 
   bind_rows(tabs_1910_bw %>% mutate(year = 1910)) %>% 
   bind_rows(tabs_1900_bw %>% mutate(year = 1900))
   
-## add on additional estimates from Margo and Collins 
+## Add on additional estimates from Margo and Collins 
 bw_external_source <- tribble(
   ~race, ~ownershp_avg, ~year,
   "White",   .512, 1890, 
@@ -263,43 +240,47 @@ bw_external_source <- tribble(
   "Black",   .077, 1870
 )
 
+## create homeownership plot by age 
 bw_homeownership_plot <- bw_tabs %>%
-    bind_rows(bw_external_source) %>% 
+  bind_rows(bw_external_source) %>% 
   mutate(label = if_else(year == max(year), as.character(race), NA_character_)) %>%
   mutate(race = case_when(
     race == "Black" ~ "Black Americans",
     race == "White" ~ "White Americans"
   )) %>% 
-  ggplot(aes(x = year, y = ownershp_avg, linetype = race, point = race)) + 
-  geom_line() + 
-  geom_point() + 
-    scale_y_continuous(labels = scales::percent,
-        breaks = scales::pretty_breaks(n = 10), limits = c(0, 0.6)) + 
+  ggplot(aes(x = year, y = ownershp_avg, linetype = race, shape = race)) + 
+  geom_line(size = 1) + 
+  geom_point(size = 3.5, fill = "white") + 
+  scale_y_continuous(labels = scales::percent,
+                     breaks = scales::pretty_breaks(n = 10), limits = c(0, 0.6)) + 
   cowplot::theme_cowplot() + 
+  scale_shape_manual(values = c(21, 23)) + 
   theme(legend.position = "bottom",
         legend.title=element_blank()) + 
-   geom_text_repel(aes(label = label),
+  geom_text_repel(aes(label = label),
                   nudge_x = 3,
                   na.rm = TRUE) + 
   xlim(1870, 1945) + 
-    labs(x = "Year",
+  labs(x = "Year",
        y = "Home Ownership Rate",
        title = "Home Ownership Rates Among Male Household Heads") 
 
-
+## save plot 
 ggsave(plot = bw_homeownership_plot, filename = here("code/figures/home_ownership_by_decade.png"), width = 8, height = 5)
-
 ```
 
 
-```{r}
+## Create homeownership plot by race X age 
 
+```{r}
+## Combine estimates 
 bw_tabs_age <- tabs_1940_bw_age %>% mutate(year = 1940) %>% 
   bind_rows(tabs_1930_bw_age %>% mutate(year = 1930)) %>%
   bind_rows(tabs_1920_bw_age %>% mutate(year = 1920)) %>% 
   bind_rows(tabs_1910_bw_age %>% mutate(year = 1910)) %>% 
   bind_rows(tabs_1900_bw_age %>% mutate(year = 1900))
 
+## Create labels 
 bw_tabs_age <- bw_tabs_age %>% 
   mutate(race = case_when(
     race == "Black" ~ "Black Americans",
@@ -310,15 +291,17 @@ bw_tabs_age <- bw_tabs_age %>%
     TRUE ~ age_cat
   ))
 
+## Create homeownership rates plot 
 home_ownership_rates_plot <- bw_tabs_age %>%
   mutate(label = if_else(year == max(year), as.character(age_cat), NA_character_)) %>%
-  ggplot(aes(x = year, y = ownershp_avg, color = age_cat)) + 
-  geom_line() + 
-  geom_point() + 
+  ggplot(aes(x = year, y = ownershp_avg, color = age_cat, shape = race)) + 
+  geom_line(size = 1) + 
+  geom_point(size = 3, fill = "white") + 
   cowplot::theme_cowplot() + 
-  ggsci::scale_color_nejm() + 
+  scale_color_brewer(palette = "Dark2") +
  # scale_color_viridis_d() + 
   theme(legend.position = "none") + 
+  scale_shape_manual(values = c(21, 23)) + 
   scale_y_continuous(labels = scales::percent,
                      breaks = scales::pretty_breaks(n = 10)) + 
   labs(x = "Year",
@@ -328,10 +311,11 @@ home_ownership_rates_plot <- bw_tabs_age %>%
                   nudge_x = 7,
                   na.rm = TRUE) + 
   xlim(1900, 1947) + 
-  facet_wrap(~race) 
+  theme(strip.background = element_blank()) + 
+  facet_wrap(~race) + 
+  panel_border()
 
+## Save plot 
 ggsave(plot = home_ownership_rates_plot, filename = here("code/figures/home_ownership_by_decade_age.png"), width = 9, height = 5)
-
-
 ```
 
