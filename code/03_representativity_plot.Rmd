@@ -1,5 +1,6 @@
 ---
 title: "Representativity Plots"
+author: "Casey Breen"
 ---
 
 Summary: Create plots assessing how representative our samples are of the general population. 

@@ -46,9 +46,9 @@ dmf_analysis_sibs <- dmf_analysis_sibs %>%
   arrange(byear) %>% 
   mutate(birth_order = row_number()) %>% ungroup()
  
-model1 <- feols(death_age ~ ownership | byear, data = dmf_analysis_sibs)
-model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip, data = dmf_analysis_sibs)
-model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)
+model1 <- feols(death_age ~ ownership | byear, weights = dmf_analysis_sibs$weight, data = dmf_analysis_sibs)
+model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip, weights = dmf_analysis_sibs$weight, data = dmf_analysis_sibs)
+model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, weights = dmf_analysis_sibs$weight, data = dmf_analysis_sibs)
 
 ## model 1 
 results <- tidy(model1) %>% mutate(model = "No Controls") %>% 
@@ -139,9 +139,9 @@ dmf_analysis_sibs_conservative <- dmf_analysis_sibs_conservative %>%
   arrange(byear) %>% 
   mutate(birth_order = row_number()) %>% ungroup()
  
-model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs_conservative)
-model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip,  data = dmf_analysis_sibs_conservative)
-model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order,  data = dmf_analysis_sibs_conservative)
+model1 <- feols(death_age ~ ownership | byear,  weights = dmf_analysis_sibs_conservative$weight_conservative, data = dmf_analysis_sibs_conservative)
+model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip, weights = dmf_analysis_sibs_conservative$weight_conservative, data = dmf_analysis_sibs_conservative)
+model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, weights = dmf_analysis_sibs_conservative$weight_conservative,  data = dmf_analysis_sibs_conservative)
 
 results_conservative <- tidy(model1) %>% mutate(model = "No Controls") %>% 
   bind_rows(tidy(model2) %>% mutate(model = "Controls")) %>% 
