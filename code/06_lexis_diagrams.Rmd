@@ -1,5 +1,6 @@
 ---
 title: "Create Lexis diagram"
+author: "Casey Breen"
 ---
 
 Summary: Create Lexis diagram demonstrating sample timeline
@@ -8,6 +9,7 @@ Summary: Create Lexis diagram demonstrating sample timeline
 ```{r}
 library(LexisPlotR)
 library(tidyverse)
+library(RColorBrewer)
 ```
 
 
@@ -45,12 +47,12 @@ lexis_grid <- function (year_start, year_end, age_start, age_end, delta = 1,
     lexis <- ggplot() + theme_bw()
     lexis <- lexis + geom_blank(data = m, aes(x = .data$x, y = .data$y))
     lexis <- lexis + geom_abline(intercept = seq(-diff_dia - 
-        100, diff_dia + 100, delta) - 1, slope = 1/365.25, lwd = lwd, color = "grey")
+        100, diff_dia + 100, delta) - 1, slope = 1/365.25, lwd = lwd, color = "grey95")
     lexis <- lexis + scale_x_date(breaks = year_seq[seq(1, length(year_seq), 
         delta)], expand = c(0, 0), date_labels = "%Y")
     lexis <- lexis + scale_y_continuous(expand = c(0, 0), breaks = age_seq[seq(1, 
         length(age_seq), delta)])
-    lexis <- lexis + theme(panel.grid.major = element_line(colour = "grey", 
+    lexis <- lexis + theme(panel.grid.major = element_line(colour = "grey95", 
         size = lwd))
     lexis <- lexis + theme(panel.grid.minor = element_blank())
     lexis <- lexis + labs(x = "", y = "")
@@ -65,21 +67,20 @@ lexis_grid <- function (year_start, year_end, age_start, age_end, delta = 1,
 
 
 
-
 ```{r}
-lexis <- lexis_grid(year_start = 1900, year_end = 2010, age_start = 0, age_end = 110, delta = 10)
+lexis <- lexis_grid(year_start = 1890, year_end = 2010, age_start = 0, age_end = 110, delta = 10)
 
-lexis <- lexis_cohort(lg = lexis, cohort = c(1905))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1906))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1907))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1908))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1909))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1910))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1911))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1912))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1913))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1914))
-lexis <- lexis_cohort(lg = lexis, cohort = c(1915)) 
+lexis <- lexis_cohort(lg = lexis, cohort = c(1905), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1906), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1907), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1908), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1909), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1910), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1911), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1912), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1913), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1914), fill = "#56B4E9")
+lexis <- lexis_cohort(lg = lexis, cohort = c(1915), fill = "#56B4E9") 
 
 p <- lexis
 
@@ -87,55 +88,44 @@ p <- p +
   labs(x = "Year", y = "Age", "title" = "Analytical Sample") + 
   theme(axis.text.x = element_text(angle = 90))
 
-p <- p + geom_vline(xintercept =  as.Date(paste(1920, "-01-01", sep = "")), color = "Blue", linetype = "dashed", size = .7) + 
-    annotate("text", x = as.Date(paste(1908, "-01-01", sep = "")), 
-                y = 20, label = "1920 Census \n (Identify Sibs)", size= 2.4, 
-                colour='blue')+ 
+p <- p + geom_vline(xintercept =  as.Date(paste(1920, "-01-01", sep = "")), color = "black", linetype = "dashed", size = .7) + 
+    annotate("text", x = as.Date(paste(1903, "-01-01", sep = "")), 
+                y = 20, label = "1920 Census \n (Identify Sibs)", size= 3, 
+                colour = "black")+ 
    annotate("segment", 
-           x = as.Date(paste(1914, "-01-01", sep = "")), xend = as.Date(paste(1919, "-01-01", sep = "")), y = 20, yend = 20,
-           arrow=arrow(length=unit(0.2, "cm")), color = "blue", size = .7)
+           x = as.Date(paste(1912, "-01-01", sep = "")), xend = as.Date(paste(1919, "-01-01", sep = "")), y = 20, yend = 20,
+           arrow=arrow(length=unit(0.2, "cm")), color = "black", size = .7)
 
 ggsave(plot = p, "figures/lexis_diagram_1.png", width = 7, height = 5)
 
 
-p <- p + geom_vline(xintercept =  as.Date(paste(1940, "-01-01", sep = "")), color = "Blue", linetype = "dashed", size = .7) + 
-   annotate("text", x = as.Date(paste(1928, "-01-01", sep = "")), 
-                y = 40, label = "1940 Census \n (Covariates)", size= 2.4, 
-                colour='blue') +
+p <- p + geom_vline(xintercept =  as.Date(paste(1940, "-01-01", sep = "")), color = "black", linetype = "dashed", size = .7) + 
+   annotate("text", x = as.Date(paste(1959, "-01-01", sep = "")), 
+                y = 20, label = "1940 Census \n (Covariates)", size= 3, 
+                colour = "black") +
    annotate("segment", 
-           x = as.Date(paste(1934, "-01-01", sep = "")), xend = as.Date(paste(1939, "-01-01", sep = "")), y = 40, yend = 40,
-           arrow=arrow(length=unit(0.2, "cm")), color = "blue", size = .7)
+           x = as.Date(paste(1948, "-01-01", sep = "")), xend = as.Date(paste(1941, "-01-01", sep = "")), y = 20, yend = 20,
+           arrow=arrow(length=unit(0.2, "cm")), color = "black", size = .7)
 
 ggsave(plot = p, "figures/lexis_diagram_2.png", width = 7, height = 5)
 
 
-p <- p + annotate("rect", xmin = as.Date(paste(2005, "-01-01", sep = "")), xmax = as.Date(paste(1975, "-01-01", sep = "")), ymin = 60, ymax = 110, alpha = .2, fill = "red") + 
+p <- p + annotate("rect", xmin = as.Date(paste(2005, "-01-01", sep = "")), xmax = as.Date(paste(1975, "-01-01", sep = "")), ymin = 60, ymax = 110, alpha = .2, fill = "firebrick") + 
    annotate("text", x = as.Date(paste(1957, "-01-01", sep = "")), 
-                y = 80, label = "Mortality Observation Window \n (1975-2005)", size= 2.4, 
-                colour='red') +
+                y = 80, label = "Mortality Observation \n Window", size= 3, 
+                colour = "firebrick") +
    annotate("segment", 
            x = as.Date(paste(1970, "-01-01", sep = "")), xend = as.Date(paste(1975, "-01-01", sep = "")), y = 80, yend = 80,
-           arrow=arrow(length=unit(0.2, "cm")), color = "red", size = .7)
+           arrow=arrow(length=unit(0.2, "cm")), color = "firebrick", size = .7)
 
   
 positions <- data.frame(x = c(as.Date(paste(1975, "-01-01", sep = "")), as.Date(paste(1975, "-01-01", sep = "")), as.Date(paste(2005, "-01-01", sep = "")), as.Date(paste(2005, "-01-01", sep = ""))),
                         y = c(59, 70, 100, 90 ))
 
-p <- p + geom_polygon(aes(x = positions$x, y = positions$y), fill = "NA", color = "black", linetype = "dashed", size= .7)
+p <- p + geom_polygon(aes(x = positions$x, y = positions$y), fill = "NA", color = "black", linetype = "dotted", size= .7)
 
 ggsave(plot = p, "figures/lexis_diagram_3.png", width = 7, height = 5)
+
+display.brewer.pal(n = 8, name = 'Dark2')
 ```
 
-```{r}
-library(LexisPlotR)
-library(ggplot2)
-library(HMDHFDplus)
-
-triangles <- HMDHFDplus::readHMDweb(CNTRY = "RUS", "Deaths_lexis", Sys.getenv("HMD_USER"), Sys.getenv("HMD_PASSWORD"))
-
-tidy_triangles <- tidy_triangle_data(triangles)
-
-lg <- lexis_grid(1960, 2000, 30, 80, delta = 5)
-
-lg + geom_polygon(data = tidy_triangles, aes(x = x, y = y, group = id, fill = Total))
-```
