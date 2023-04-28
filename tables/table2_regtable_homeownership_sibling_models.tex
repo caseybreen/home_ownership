@@ -1,0 +1,39 @@
+
+\begingroup
+\centering
+\begin{tabular}{lcccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{4}{c}{death\_age}\\
+   Model:         & (1)            & (2)             & (3)            & (4)\\  
+   \midrule
+   \emph{Variables}\\
+   ownership10    & 0.6765$^{***}$ & 0.5823$^{***}$  & 0.3877$^{***}$ & 0.3933$^{***}$\\   
+                  & (0.0505)       & (0.0551)        & (0.0611)       & (0.0626)\\   
+   educ\_yrs      &                & 0.1663$^{***}$  &                & 0.1425$^{***}$\\   
+                  &                & (0.0123)        &                & (0.0221)\\   
+   racecOther     &                & -1.757$^{*}$    &                & 2.574\\   
+                  &                & (0.7965)        &                & (1.707)\\   
+   racecWhite     &                & -0.0952         &                & -0.4184\\   
+                  &                & (0.1804)        &                & (0.7135)\\   
+   urban          &                & -0.3318$^{***}$ &                & -0.0377\\   
+                  &                & (0.0729)        &                & (0.1051)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   byear          & Yes            & Yes             & Yes            & Yes\\  
+   occ            &                & Yes             &                & Yes\\  
+   marst          &                & Yes             &                & Yes\\  
+   statefip       &                & Yes             &                & Yes\\  
+   serialp\_1920  &                &                 & Yes            & Yes\\  
+   birth\_order   &                &                 & Yes            & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations   & 78,426         & 78,426          & 78,426         & 78,426\\  
+   R$^2$          & 0.03296        & 0.04670         & 0.54967        & 0.55442\\  
+   Within R$^2$   & 0.00148        & 0.00386         & 0.00043        & 0.00154\\  
+   \midrule \midrule
+   \multicolumn{5}{l}{\emph{Clustered (byear) standard-errors in parentheses}}\\
+   \multicolumn{5}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
+
+

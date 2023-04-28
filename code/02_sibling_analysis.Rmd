@@ -1,17 +1,22 @@
 ---
-title: "Home Ownership Analysis"
+title: "Home Ownership Sibling Analysis"
 author: Casey Breen
 ---
 
 
 Summary: Create causal estimates of association between home ownership and longevity using sibling-based fixed effects models. 
 
+This code generates: 
+
+- Figure 7, 8, 9, 10 
+- Table 2, 3, 4
+
 
 ## Library packages 
 
 ```{r}
 ## library packages
-library(data.table)
+library(data.table)  
 library(tidyverse)
 library(ipumsr)
 library(socviz)
@@ -26,7 +31,7 @@ dmf_sibs <- fread(here("code/analysis_file/censoc_analysis_sibs.csv")) %>%
   janitor::clean_names()
 ```
 
-## Standard ABE models (pooled, pooled adjusted, sib-FE adjusted)
+## Figure 7 — Standard models (pooled, pooled adjusted, sib-FE adjusted)
 
 ```{r}
 ## dmf calculate birth order based on sibs 
@@ -34,18 +39,20 @@ dmf_analysis_sibs <- dmf_sibs %>%
   mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   group_by(serialp_1920) %>% 
   arrange(byear) %>% 
-  mutate(birth_order = row_number()) %>% ungroup()
+  mutate(birth_order = row_number()) %>% 
+  ungroup() %>% 
+  mutate(racec = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  )) %>% 
+  filter(!is.na(educ_yrs))
  
-<<<<<<< Updated upstream
-model1 <- feols(death_age ~ ownership | byear, weights = dmf_analysis_sibs$weight, data = dmf_analysis_sibs)
-model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip, weights = dmf_analysis_sibs$weight, data = dmf_analysis_sibs)
-model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, weights = dmf_analysis_sibs$weight, data = dmf_analysis_sibs)
-=======
-## fit models 
-model1 <- feols(death_age ~ ownership | byear, data = dmf_analysis_sibs)
-model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip, data = dmf_analysis_sibs)
-model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)
->>>>>>> Stashed changes
+## fit full regression models 
+model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs)
+model2 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear  + occ  + marst + statefip, data = dmf_analysis_sibs)
+model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)
+model4 <- feols(death_age ~ ownership  | byear + serialp_1920 + birth_order, data = dmf_analysis_sibs)
 
 ## model 1 
 results <- tidy(model1) %>% 
@@ -79,6 +86,7 @@ results <- tidy(model1) %>% mutate(model = "No Controls") %>%
 
 ## visualize model 2 
 home_ownership_regression_plot2 <- results %>% 
+  filter(term == "ownership10" | is.na(term)) %>% 
   mutate(e65 = estimate,
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
@@ -102,6 +110,7 @@ results <- tidy(model1) %>% mutate(model = "No Controls") %>%
 
 ## visualize model 3 
 home_ownership_regression_plot3 <- results %>% 
+    filter(term == "ownership10") %>% 
   mutate(e65 = estimate,
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
@@ -118,10 +127,17 @@ home_ownership_regression_plot3 <- results %>%
   geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
 
 ## save plots 
-ggsave(plot = home_ownership_regression_plot1, "figures/home_ownership_models1.png", width = 6, height = 4)
-ggsave(plot = home_ownership_regression_plot2, "figures/home_ownership_models2.png", width = 6, height = 4)
-ggsave(plot = home_ownership_regression_plot3, "figures/home_ownership_models3.png", width = 6, height = 4)
+ggsave(plot = home_ownership_regression_plot1, here("figures/home_ownership_sib_models1.png"), width = 6, height = 4)
+ggsave(plot = home_ownership_regression_plot2, here("figures/home_ownership_sib_models2.png"), width = 6, height = 4)
+ggsave(plot = home_ownership_regression_plot3, here("figures/fig7_home_ownership_sib_models3.png"), width = 6, height = 4)
 ```
+
+## Table 2 — Full Regression Models 
+
+```{r}
+etable(model1, model2, model4, model3, tex = T, file = here("tables/table2_regtable_homeownership_sibling_models.tex"), replace = T)
+```
+
 
 ## Causal ABE models — Conservative Subsample (pooled, pooled adjusted, sib-FE adjusted)
 
@@ -131,32 +147,26 @@ dmf_analysis_sibs_conservative <- dmf_analysis_sibs %>%
   filter(link_abe_exact_conservative_1940_dmf == 1 & link_abe_exact_conservative_1920_1940 == 1) %>% 
   mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   group_by(serialp_1920) %>% 
-  filter(n() > 1) 
-
-## Calculate birth order  
-dmf_analysis_sibs_conservative <- dmf_analysis_sibs_conservative %>% 
+  filter(n() > 1) %>% 
   arrange(byear) %>% 
   mutate(birth_order = row_number()) %>% ungroup()
  
-<<<<<<< Updated upstream
-model1 <- feols(death_age ~ ownership | byear,  weights = dmf_analysis_sibs_conservative$weight_conservative, data = dmf_analysis_sibs_conservative)
-model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip, weights = dmf_analysis_sibs_conservative$weight_conservative, data = dmf_analysis_sibs_conservative)
-model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, weights = dmf_analysis_sibs_conservative$weight_conservative,  data = dmf_analysis_sibs_conservative)
-=======
-## Fit models 
+ 
+## fit full regression models 
 model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs_conservative)
-model2 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race  + marst + statefip,  data = dmf_analysis_sibs_conservative)
-model3 <- feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order,  data = dmf_analysis_sibs_conservative)
->>>>>>> Stashed changes
+model2 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear  + occ  + marst + statefip, data = dmf_analysis_sibs_conservative)
+model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs_conservative)
+model4 <- feols(death_age ~ ownership  | byear + serialp_1920 + birth_order, data = dmf_analysis_sibs_conservative)
 
-## Combine results  
-results_conservative <- tidy(model1) %>% mutate(model = "No Controls") %>% 
+## combine all results into one data.frame
+results <- tidy(model1) %>% mutate(model = "No Controls") %>% 
   bind_rows(tidy(model2) %>% mutate(model = "Controls")) %>% 
   bind_rows(tidy(model3) %>% mutate(model = "Controls + Sibling FE")) %>% 
   mutate(model = factor(model, levels= c("No Controls", "Controls", "Controls + Sibling FE")))
 
-## Visualize results 
-home_ownership_regression_conservative_plot <- results_conservative %>% 
+## visualize model 3 
+home_ownership_regression_conservative_plot <- results %>% 
+    filter(term == "ownership10") %>% 
   mutate(e65 = estimate,
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
@@ -169,11 +179,11 @@ home_ownership_regression_conservative_plot <- results_conservative %>%
        y = "Additional Years of Life") + 
   scale_color_manual(values = cud) + 
   theme(legend.position = "NULL") +
-   annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
+  annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
   geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
 
 ## Save plot 
-ggsave(plot = home_ownership_regression_conservative_plot, "figures/home_ownership_models_conservative.png", width = 6, height = 4)
+ggsave(plot = home_ownership_regression_conservative_plot, here("figures/fig10_home_ownership_sib_models_conservative.png"), width = 6, height = 4)
 ```
 
 ## discordant siblings 
@@ -187,27 +197,6 @@ dmf_analysis_sibs %>%
   summarize(prop = n / sum(n))
 ```
 
-
-## Full Regression Models 
-
-```{r}
-## Run Regression Models 
-dmf_analysis_sibs <- dmf_analysis_sibs %>% 
-  mutate(racec = case_when(
-    race == 100 ~ "White",
-    race == 200 ~ "Black",
-    TRUE ~ "Other"
-  ))
-
-## fit full regression models 
-model1 <- feols(death_age ~ ownership | byear, data = dmf_analysis_sibs)
-model2 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear  + occ +   + marst + statefip, data = dmf_analysis_sibs)
-model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)
-
-etable(model1, model2, model3, tex = T)
-```
-
-
 ## Sensitivity analysis 
 
 Create different, more restrictive subsamples and rerun model 3 on each subgroup. The idea is by making such restrictions (e.g., sibling living in the same county) we are able to control for potential confounding. 
@@ -219,7 +208,7 @@ byear_restrict_df <- dmf_analysis_sibs %>%
    mutate(byear_range = max(byear) - min(byear)) %>% 
    filter(byear_range < 6)
 
-model_similar_edu <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = byear_restrict_df)) %>% mutate(model = "Birth Year Restriction")
+model_similar_edu <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = byear_restrict_df)) %>% mutate(model = "Birth Year Restriction")
 
 ## county restriction 
 county_restriction_df <- dmf_analysis_sibs %>% 
@@ -227,7 +216,7 @@ county_restriction_df <- dmf_analysis_sibs %>%
   filter(n_distinct(countyicp) == 1) %>% 
   ungroup()
 
-model_county <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = county_restriction_df)) %>% mutate(model = "County Restriction")
+model_county <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = county_restriction_df)) %>% mutate(model = "County Restriction")
 
 ## marital status restriction 
 marst_restriction_df <- dmf_analysis_sibs %>% 
@@ -235,7 +224,7 @@ marst_restriction_df <- dmf_analysis_sibs %>%
   filter(n_distinct(marst) == 1) %>% 
   ungroup()
 
-marst_similar_model <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = marst_restriction_df)) %>% mutate(model = "Marital Status Restriction")
+marst_similar_model <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = marst_restriction_df)) %>% mutate(model = "Marital Status Restriction")
 
 
 ## education status restriction 
@@ -245,7 +234,7 @@ educ_restriction_df <- dmf_analysis_sibs %>%
   filter(educ_range < 3) %>% 
   ungroup()
 
-educ_similar_model <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = educ_restriction_df)) %>% mutate(model = "Education Restriction")
+educ_similar_model <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = educ_restriction_df)) %>% mutate(model = "Education Restriction")
 
 ## full restrictions 
 full_restrictions <- dmf_analysis_sibs %>% 
@@ -257,7 +246,7 @@ full_restrictions <- dmf_analysis_sibs %>%
   filter(n_distinct(countyicp) == 1) %>% 
   filter(n_distinct(marst) == 1)
 
-full_restrictions_model <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = full_restrictions)) %>% mutate(model = "All Restrictions ")
+full_restrictions_model <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = full_restrictions)) %>% mutate(model = "All Restrictions ")
 
 ## combine estimates into one data frame
 results_robustness <- model_similar_edu %>% 
@@ -268,6 +257,7 @@ results_robustness <- model_similar_edu %>%
 
 ## sensitivity analysis 
 sensitivity_analysis_plots <- results_robustness %>% 
+      filter(term == "ownership10") %>% 
   mutate(e65 = estimate,
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
@@ -283,38 +273,10 @@ sensitivity_analysis_plots <- results_robustness %>%
   geom_vline( xintercept = 0.400182, linetype = "dashed") + 
   theme(legend.position = "NULL") + 
   scale_x_continuous(breaks = scales::pretty_breaks(n = 5)) +
-  annotate("text", x = .05, y = 2.5, label = "Renters", fontface = 'italic', angle='90') + 
+  annotate("text", x = .03, y = 2.5, label = "Renters", fontface = 'italic', angle='90') + 
   geom_vline(xintercept = 0, color = "grey", linetype =  "dashed") + 
-  annotate("text", x = .45, y = 2.5, label = "Full Sample", fontface = 'italic', angle='90') 
+  annotate("text", x = .43, y = 2.5, label = "Full Sample", fontface = 'italic', angle='90') 
 
 ## save plot 
-ggsave(plot = sensitivity_analysis_plots, "figures/home_ownership_sensitivity_analyses.png", width = 7, height = 5.5)
+ggsave(plot = sensitivity_analysis_plots, here("figures/fig8_home_ownership_sensitivity_analyses.png"), width = 7.7, height = 6)
 ```
-
-
-```{r}
-results_sensitivity_byear <- list()
-  
-for (i in 1:5) {
-  
-## byear restriction 
-byear_restrict_df <- dmf_analysis_sibs %>%
-    filter(byear >= 1904 + i & byear <= 1904 + 4 + i) %>% 
-   group_by(serialp_1920) %>% 
-  filter(n() > 1)
-  
-
-results_sensitivity_byear[[i]] <- tidy(feols(death_age ~ ownership  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920 + birth_order, data = byear_restrict_df)) %>% mutate(model = "byear restriction") %>% 
-  mutate(byear = paste0(1904 + i, ", ", 1905 + 4 + i))
-}
-
-
-bind_rows(results_sensitivity_byear) %>% 
-  ggplot(aes(x = byear, y = estimate, ymin = estimate - std.error, ymax = estimate + std.error)) + 
-  geom_pointrange() + 
-  theme_cowplot() + 
-   annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
-  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
-```
-
-
