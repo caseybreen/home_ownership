@@ -3,7 +3,6 @@ title: "Home Ownership Sibling Analysis"
 author: Casey Breen
 ---
 
-
 Summary: Create causal estimates of association between home ownership and longevity using sibling-based fixed effects models. 
 
 This code generates: 

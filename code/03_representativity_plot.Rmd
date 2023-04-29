@@ -20,14 +20,13 @@ library(gt)
 
 
 ```{r}
-sib_file <- fread(here("data/censoc_sibs.csv")) %>% 
-  janitor::clean_names() %>% 
+sib_file <- fread(here("code/analysis_file/censoc_analysis_sibs.csv")) %>% 
   mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   filter(ownership != 0) %>% 
   filter(relate == 101) %>% 
   group_by(serialp_1920) %>% 
   filter(n() > 1) %>% 
-  censocdev::recode_education(educ_var = educ)
+  censocdev::recode_education(educ_var = "educ")
 ```
 
 
@@ -35,6 +34,7 @@ sib_file <- fread(here("data/censoc_sibs.csv")) %>%
 ## read in dmf 
 dmf <- fread("/censoc/data/censoc_v2.1/censoc_dmf_v2.1.csv") %>% 
   janitor::clean_names()
+
 ## read in 1940 census 
 census_1940 <- fread("/ipums-repo2019/1940/TSV/P.tsv", select = c("HISTID", "SERIALP", "AGE", "INCWAGE", "SEX", "EDUC", "RACE", "RELATE", "REGION", "MARST", "SEI")) %>%  
   janitor::clean_names()
@@ -223,7 +223,7 @@ table_s3 <- gt(data = combined_characteristics) %>%
 
 ## save tables
 table_s3 %>%
-  gtsave("dmf_characteristics_table.tex", path = here("code/figures/")) 
+  gtsave("dmf_characteristics_table.tex", path = here("code/tables/")) 
 ```
 
 

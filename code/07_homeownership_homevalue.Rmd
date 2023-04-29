@@ -3,6 +3,8 @@ title: "Home Ownership and Mortality by Quintile"
 author: Casey Breen
 ---
 
+Summary: identify homeownership status in the 1920 census. 
+
 ## Library packages 
 
 ```{r}
@@ -43,15 +45,15 @@ hh_homes <- hh_homes %>%
 
 ```{r}
 ## Read in sibling file 
-dmf_sibs <- fread(here("code/analysis_file/censoc_analysis_sibs.csv")) %>% 
+dmf_analysis_sibs <- fread(here("code/analysis_file/censoc_analysis_sibs.csv")) %>% 
   janitor::clean_names()
 
 ## dmf sibs 
-dmf_sibs <- dmf_sibs %>% 
+dmf_analysis_sibs <- dmf_analysis_sibs %>% 
   left_join(hh_homes %>% select(serialp_1940 = SERIAL, hvalue_state))
 
 ## recode dmf sibs 
-dmf_analysis_sibs_new <- dmf_sibs %>% 
+dmf_analysis_sibs <- dmf_analysis_sibs %>% 
   filter(ownership != 10 | valueh != 9999998) %>% 
   mutate(ownership_value = case_when(
     ownership == 10 & hvalue_state == 1 ~ 1,
@@ -59,15 +61,32 @@ dmf_analysis_sibs_new <- dmf_sibs %>%
     ownership == 10 & hvalue_state == 3 ~ 3,
     ownership == 10 & hvalue_state == 4 ~ 4,
     TRUE ~ 0
-    ))
+    )) %>% 
+   mutate(racec = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  )) %>% 
+  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
+  group_by(serialp_1920) %>% 
+  arrange(byear) %>% 
+  mutate(birth_order = row_number()) %>% 
+  ungroup() %>% 
+  mutate(racec = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  )) %>% 
+  filter(!is.na(educ_yrs))
 
 ## run models 
-model1 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear,  data = dmf_analysis_sibs_new)) %>% mutate(model = "No Controls")
-model2 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear + educ_yrs + urban + occ + race + marst + statefip,  data = dmf_analysis_sibs_new)) %>% mutate(model = "Controls")
-model3 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear + educ_yrs + urban + occ + race + marst + statefip + serialp_1920,  data = dmf_analysis_sibs_new)) %>% mutate(model = "Controls + Sibling FE")
+model1 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear, data = dmf_analysis_sibs)) %>% mutate(model = "No Controls")
+model2 <- tidy(feols(death_age ~ as.factor(ownership_value)  + educ_yrs + racec + urban | byear  + occ  + marst + statefip, data = dmf_analysis_sibs)) %>% mutate(model = "Controls")
+model3 <- tidy(feols(death_age ~ as.factor(ownership_value) + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)) %>% mutate(model = "Controls + Sibling FE")
 
 ## effect heterogeneity 
 home_ownership_homevalue_plot_1models <- model3 %>% 
+  filter(str_detect(pattern = "as.factor", string = term)) %>% 
   # bind_rows(model2) %>% 
   # bind_rows(model1) %>% 
   mutate(term = case_when(
@@ -97,6 +116,7 @@ home_ownership_homevalue_plot_1models <- model3 %>%
 home_ownership_homevalue_plot_3models <- model1 %>% 
   bind_rows(model2) %>% 
   bind_rows(model3) %>% 
+    filter(str_detect(pattern = "as.factor", string = term)) %>% 
   mutate(term = case_when(
     term == "as.factor(ownership_value)1" ~ "Q1 (Low)",
     term == "as.factor(ownership_value)2" ~ "Q2",
@@ -121,9 +141,9 @@ home_ownership_homevalue_plot_3models <- model1 %>%
            parse = TRUE)
 
 ## homeownership plot 1 
-ggsave(plot = home_ownership_homevalue_plot_1models, "figures/home_ownership_homevalue_plot_1models.png", width = 6, height = 4)
+ggsave(plot = home_ownership_homevalue_plot_1models, here("figures/fig9-home_ownership_homevalue_plot_1models.png"), width = 6, height = 4)
 
 ## homeownership plot 3 
-ggsave(plot = home_ownership_homevalue_plot_3models, "figures/home_ownership_homevalue_plot_3models.png", width = 6, height = 4)
+ggsave(plot = home_ownership_homevalue_plot_3models, here("figures/reserve-home_ownership_homevalue_plot_3models.png"), width = 6, height = 4)
 ```
 

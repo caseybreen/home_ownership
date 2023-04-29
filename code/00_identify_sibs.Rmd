@@ -50,6 +50,10 @@ censoc_dmf_linked <- censoc_dmf %>%
 ## identify linked siblings  
 censoc_dmf_linked_sibs_final <- censoc_dmf_linked %>% 
   filter(byear %in% 1905:1915) %>% 
+  filter(byear %in% 1905:1915 & age %in% 22:37) %>% 
+  filter(bpl < 15000) %>% 
+  filter(relate == 101) %>% 
+  filter(ownershp != 0) %>% 
   group_by(serialp_1920) %>% 
   filter(n() > 1) %>% 
   ungroup()
