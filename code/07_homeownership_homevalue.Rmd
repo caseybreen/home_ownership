@@ -3,19 +3,12 @@ title: "Home Ownership and Mortality by Quintile"
 author: Casey Breen
 ---
 
-Summary: identify homeownership status in the 1920 census. 
+Summary: identify how the quantile of wealth in 1940 
 
 ## Library packages 
 
 ```{r}
-## library packages
-library(data.table)
-library(tidyverse)
-library(ipumsr)
-library(socviz)
-library(broom)
-library(cowplot)
-library(fixest)
+## Load helper functions and library all packages used for analysis
 library(here)
 source(here("code/helpers.R"))
 ```
@@ -45,7 +38,7 @@ hh_homes <- hh_homes %>%
 
 ```{r}
 ## Read in sibling file 
-dmf_analysis_sibs <- fread(here("code/analysis_file/censoc_analysis_sibs.csv")) %>% 
+dmf_analysis_sibs <- fread(here("data/dmf_sibs.csv")) %>% 
   janitor::clean_names()
 
 ## dmf sibs 
@@ -54,6 +47,8 @@ dmf_analysis_sibs <- dmf_analysis_sibs %>%
 
 ## recode dmf sibs 
 dmf_analysis_sibs <- dmf_analysis_sibs %>% 
+    mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
+  censocdev::recode_education(educ_var = "educ") %>% 
   filter(ownership != 10 | valueh != 9999998) %>% 
   mutate(ownership_value = case_when(
     ownership == 10 & hvalue_state == 1 ~ 1,
@@ -67,7 +62,6 @@ dmf_analysis_sibs <- dmf_analysis_sibs %>%
     race == 200 ~ "Black",
     TRUE ~ "Other"
   )) %>% 
-  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   group_by(serialp_1920) %>% 
   arrange(byear) %>% 
   mutate(birth_order = row_number()) %>% 
@@ -135,7 +129,6 @@ home_ownership_homevalue_plot_3models <- model1 %>%
   scale_color_manual(values = cud) + 
   labs(x = "Home Value Quartile",
        y = "Additional Years of Life") + 
-  # scale_color_viridis_d(option = "m") + 
   theme(legend.position = "bottom") + 
   annotate("text", x = 3.5, y = -.05, label = "Renters",
            parse = TRUE)

@@ -1,0 +1,22 @@
+---
+title: "Gompertztrunc Analyses"
+author: Casey Breen 
+---
+
+
+```{r}
+## Load helper functions and library all packages used for analysis
+library(here)
+source(here("code/helpers.R"))
+
+## read in sibling mortality data 
+dmf_sibs <- fread(here("data/dmf_sibs.csv")) %>% 
+  janitor::clean_names()
+```
+
+
+```{r}
+gompertz_model <- gompertztrunc::gompertz_mle(data = dmf_sibs, death_age ~ ownershp + as.factor(byear))
+gompertztrunc::convert_hazards_to_ex(gompertz_model$results, use_model_estimates = T)
+```
+

@@ -6,29 +6,16 @@ author: "Casey Breen"
 Summary: Create plots assessing how representative our samples are of the general population. 
 
 ```{r}
-## library packages
-library(data.table)
-library(tidyverse)
-library(ipumsr)
-library(socviz)
-library(broom)
-library(cowplot)
-library(fixest)
+## Load helper functions and library all packages used for analysis
 library(here)
-library(gt)
+source(here("code/helpers.R"))
 ```
 
 
 ```{r}
-sib_file <- fread(here("code/analysis_file/censoc_analysis_sibs.csv")) %>% 
-  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
-  filter(ownership != 0) %>% 
-  filter(relate == 101) %>% 
-  group_by(serialp_1920) %>% 
-  filter(n() > 1) %>% 
+sib_file <- fread(here("data/dmf_sibs.csv")) %>% 
   censocdev::recode_education(educ_var = "educ")
 ```
-
 
 ```{r}
 ## read in dmf 
@@ -59,15 +46,15 @@ census_1940_hh_vars <- census_1940_hh_vars %>%
 
 ## recode education variable to years of education
 census_1940_hh_vars <- census_1940_hh_vars %>% 
-  censocdev::recode_education(educ_var = educ)
+  censocdev::recode_education(educ_var = "educ")
 
-## read data dictionary initiative (DDI) file with varnames and var labels 
+## read data dictionary initiative (DDI) file with varnames and var labels
 ipums_ddi <- ipumsr::read_ipums_ddi("/ipums-repo2019-1/fullcount.ddi.xml")
 
-## add on ipums value + variable labels  
-census_1940_hh_vars <- census_1940_hh_vars %>% 
-  janitor::clean_names(case = "all_caps") %>% 
-  ipumsr::ipums_collect(ipums_ddi, var_attrs = c("val_labels", "var_label", "var_desc")) %>% 
+## add on ipums value + variable labels
+census_1940_hh_vars <- census_1940_hh_vars %>%
+  janitor::clean_names(case = "all_caps") %>%
+  ipumsr::ipums_collect(ipums_ddi, var_attrs = c("val_labels", "var_label", "var_desc")) %>%
   janitor::clean_names()
 ```
 
@@ -223,7 +210,7 @@ table_s3 <- gt(data = combined_characteristics) %>%
 
 ## save tables
 table_s3 %>%
-  gtsave("dmf_characteristics_table.tex", path = here("code/tables/")) 
+  gtsave("dmf_characteristics_table.tex", path = here("tables/")) 
 ```
 
 
