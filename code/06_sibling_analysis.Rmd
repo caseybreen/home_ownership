@@ -128,7 +128,7 @@ ggsave(plot = home_ownership_regression_plot3, here("figures/fig7_home_ownership
 ## Table 2 — Full Regression Models 
 
 ```{r}
-etable(model1, model2, model4, model3, tex = T, file = here("tables/table2_regtable_homeownership_sibling_models.tex"), replace = T)
+etable(model1, model2, model4, model3, tex = T, file = here("tables/table3_regtable_sibling_models.tex"), replace = T)
 ```
 
 

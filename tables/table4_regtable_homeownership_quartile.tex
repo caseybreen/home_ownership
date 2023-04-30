@@ -1,0 +1,45 @@
+
+\begingroup
+\centering
+\begin{tabular}{lccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{3}{c}{death\_age}\\
+   Model:                        & (1)            & (2)             & (3)\\  
+   \midrule
+   \emph{Variables}\\
+   as.factor(ownership\_value)1  & 0.3808$^{***}$ & 0.4450$^{***}$  & 0.2579$^{*}$\\   
+                                 & (0.0751)       & (0.0662)        & (0.1279)\\   
+   as.factor(ownership\_value)2  & 0.5768$^{***}$ & 0.5027$^{***}$  & 0.2688\\   
+                                 & (0.0685)       & (0.0797)        & (0.1610)\\   
+   as.factor(ownership\_value)3  & 0.8616$^{***}$ & 0.7207$^{***}$  & 0.5220$^{**}$\\   
+                                 & (0.1050)       & (0.1176)        & (0.1747)\\   
+   as.factor(ownership\_value)4  & 0.9960$^{***}$ & 0.6172$^{***}$  & 0.3909$^{**}$\\   
+                                 & (0.1303)       & (0.1228)        & (0.1712)\\   
+   educ\_yrs                     &                & 0.1716$^{***}$  & 0.1414$^{***}$\\   
+                                 &                & (0.0136)        & (0.0228)\\   
+   racecOther                    &                & -2.737$^{**}$   & 0.6885\\   
+                                 &                & (0.9593)        & (1.566)\\   
+   racecWhite                    &                & -0.3917         & -1.457\\   
+                                 &                & (0.2946)        & (0.9235)\\   
+   urban                         &                & -0.3800$^{***}$ & -0.0544\\   
+                                 &                & (0.0744)        & (0.1301)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   byear                         & Yes            & Yes             & Yes\\  
+   occ                           &                & Yes             & Yes\\  
+   marst                         &                & Yes             & Yes\\  
+   statefip                      &                & Yes             & Yes\\  
+   serialp\_1920                 &                &                 & Yes\\  
+   birth\_order                  &                &                 & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                  & 83,136         & 83,136          & 83,136\\  
+   R$^2$                         & 0.03661        & 0.05001         & 0.55691\\  
+   Within R$^2$                  & 0.00160        & 0.00403         & 0.00146\\  
+   \midrule \midrule
+   \multicolumn{4}{l}{\emph{Clustered (byear) standard-errors in parentheses}}\\
+   \multicolumn{4}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
+
+

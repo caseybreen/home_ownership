@@ -210,7 +210,7 @@ table_s3 <- gt(data = combined_characteristics) %>%
 
 ## save tables
 table_s3 %>%
-  gtsave("dmf_characteristics_table.tex", path = here("tables/")) 
+  gtsave("table1_dmf_characteristics.tex", path = here("tables/")) 
 ```
 
 

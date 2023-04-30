@@ -18,7 +18,7 @@ rmd_files <- list.files(path = file.path(here("code//")), pattern=".Rmd")
 rmd_files <- rmd_files[!rmd_files %in% "00_run_all.Rmd"]
 ## set seed for reproducibility 
 set.seed(1)
-for (cur_file in rmd_files[5:8]) {
+for (cur_file in rmd_files) {
 	cat("================================\n")
   source(here("code", "helpers.R"))
 	tictoc::tic(glue::glue("Finished with {cur_file}, time:"))

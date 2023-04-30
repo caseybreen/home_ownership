@@ -139,4 +139,14 @@ ggsave(plot = home_ownership_homevalue_plot_1models, here("figures/fig9-home_own
 ## homeownership plot 3 
 ggsave(plot = home_ownership_homevalue_plot_3models, here("figures/reserve_figures/home_ownership_homevalue_plot_3models.png"), width = 6, height = 4)
 ```
+## create regression table 
+
+```{r}
+## rerun models 
+model1 <- feols(death_age ~ as.factor(ownership_value)  | byear, data = dmf_analysis_sibs)
+model2 <- feols(death_age ~ as.factor(ownership_value)  + educ_yrs + racec + urban | byear  + occ  + marst + statefip, data = dmf_analysis_sibs)
+model3 <- feols(death_age ~ as.factor(ownership_value) + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)
+
+etable(model1, model2, model3, tex = T, file = here("tables/table4_regtable_homeownership_quartile.tex"), replace = T)
+```
 
