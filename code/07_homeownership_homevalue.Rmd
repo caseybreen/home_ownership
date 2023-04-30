@@ -137,6 +137,6 @@ home_ownership_homevalue_plot_3models <- model1 %>%
 ggsave(plot = home_ownership_homevalue_plot_1models, here("figures/fig9-home_ownership_homevalue_plot_1models.png"), width = 6, height = 4)
 
 ## homeownership plot 3 
-ggsave(plot = home_ownership_homevalue_plot_3models, here("figures/reserve-home_ownership_homevalue_plot_3models.png"), width = 6, height = 4)
+ggsave(plot = home_ownership_homevalue_plot_3models, here("figures/reserve_figures/home_ownership_homevalue_plot_3models.png"), width = 6, height = 4)
 ```
 
