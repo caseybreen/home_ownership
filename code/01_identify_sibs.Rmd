@@ -59,13 +59,28 @@ censoc_dmf_linked_sibs_final <- censoc_dmf_linked %>%
   filter(n > 1) %>% 
   ungroup()
 
-## recode 
+## recode eduction 
+censoc_dmf_linked_sibs_final <- censoc_dmf_linked_sibs_final %>% 
+  censocdev::recode_education(educ_var = "educ") %>% 
+  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
+  group_by(serialp_1920) %>% 
+  arrange(byear) %>% 
+  mutate(birth_order = row_number()) %>% 
+  ungroup() %>% 
+  mutate(racec = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  )) %>% 
+  mutate(educ_yrs = case_when(
+    is.na(educ_yrs) ~ median(educ_yrs, na.rm = T),
+    TRUE ~ educ_yrs))
 ```
 
 
 ```{r}
 ## write out linked census file
-fwrite(censoc_dmf_linked_sibs_final, here("data/dmf_sibs.csv"))
+write_rds(censoc_dmf_linked_sibs_final, here("data/dmf_sibs.rds"))
 ```
 
 

@@ -11,6 +11,10 @@ Summary: identify how the quantile of wealth in 1940
 ## Load helper functions and library all packages used for analysis
 library(here)
 source(here("code/helpers.R"))
+
+## Read in sibling file 
+dmf_analysis_sibs <- read_rds(here("data/dmf_sibs.rds")) %>% 
+  janitor::clean_names()
 ```
 
 ## Calculate homeownership value quartile
@@ -37,10 +41,6 @@ hh_homes <- hh_homes %>%
 ## Link analysis file onto CenSoc file 
 
 ```{r}
-## Read in sibling file 
-dmf_analysis_sibs <- fread(here("data/dmf_sibs.csv")) %>% 
-  janitor::clean_names()
-
 ## dmf sibs 
 dmf_analysis_sibs <- dmf_analysis_sibs %>% 
   left_join(hh_homes %>% select(serialp_1940 = SERIAL, hvalue_state))
@@ -81,8 +81,6 @@ model3 <- tidy(feols(death_age ~ as.factor(ownership_value) + educ_yrs + racec +
 ## effect heterogeneity 
 home_ownership_homevalue_plot_1models <- model3 %>% 
   filter(str_detect(pattern = "as.factor", string = term)) %>% 
-  # bind_rows(model2) %>% 
-  # bind_rows(model1) %>% 
   mutate(term = case_when(
     term == "as.factor(ownership_value)1" ~ "Q1 (Low)",
     term == "as.factor(ownership_value)2" ~ "Q2",

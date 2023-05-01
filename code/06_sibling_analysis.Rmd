@@ -17,35 +17,19 @@ This code generates:
 ## Load helper functions and library all packages used for analysis
 library(here)
 source(here("code/helpers.R"))
-
 ## read in sibling mortality data 
-dmf_sibs <- fread(here("data/dmf_sibs.csv")) %>% 
-  janitor::clean_names()
+
+dmf_sibs <- read_rds(here("data/dmf_sibs.rds")) 
 ```
 
 ## Figure 7 — Standard models (pooled, pooled adjusted, sib-FE adjusted)
 
 ```{r}
-## dmf calculate birth order based on sibs 
-dmf_analysis_sibs <- dmf_sibs %>% 
-  censocdev::recode_education(educ_var = "educ") %>% 
-  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
-  group_by(serialp_1920) %>% 
-  arrange(byear) %>% 
-  mutate(birth_order = row_number()) %>% 
-  ungroup() %>% 
-  mutate(racec = case_when(
-    race == 100 ~ "White",
-    race == 200 ~ "Black",
-    TRUE ~ "Other"
-  )) %>% 
-  filter(!is.na(educ_yrs))
- 
 ## fit full regression models 
-model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs)
-model2 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear  + occ  + marst + statefip, data = dmf_analysis_sibs)
-model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)
-model4 <- feols(death_age ~ ownership  | byear + serialp_1920 + birth_order, data = dmf_analysis_sibs)
+model1 <- feols(death_age ~ ownership | byear,  data = dmf_sibs)
+model2 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear  + occ  + marst + statefip, data = dmf_sibs)
+model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_sibs)
+model4 <- feols(death_age ~ ownership  | byear + serialp_1920 + birth_order, data = dmf_sibs)
 
 ## model 1 
 results <- tidy(model1) %>% 
@@ -136,20 +120,20 @@ etable(model1, model2, model4, model3, tex = T, file = here("tables/table3_regta
 
 ```{r}
 ## Restrict to conservative subsample for both linkages 
-dmf_analysis_sibs_conservative <- dmf_analysis_sibs %>% 
+dmf_sibs_conservative <- dmf_sibs %>% 
   filter(link_abe_exact_conservative_1940_dmf == 1 & link_abe_exact_conservative_1920_1940 == 1) %>% 
-  mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   group_by(serialp_1920) %>% 
   filter(n() > 1) %>% 
   arrange(byear) %>% 
-  mutate(birth_order = row_number()) %>% ungroup()
- 
+  mutate(birth_order = row_number()) %>%
+  ungroup()
  
 ## fit full regression models 
-model1 <- feols(death_age ~ ownership | byear,  data = dmf_analysis_sibs_conservative)
-model2 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear  + occ  + marst + statefip, data = dmf_analysis_sibs_conservative)
-model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs_conservative)
-model4 <- feols(death_age ~ ownership  | byear + serialp_1920 + birth_order, data = dmf_analysis_sibs_conservative)
+model1 <- feols(death_age ~ ownership | byear,  data = dmf_sibs_conservative)
+model2 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear  + occ  + marst + statefip, data = dmf_sibs_conservative)
+model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_sibs_conservative)
+model4 <- feols(death_age ~ ownership  | byear + serialp_1920 + birth_order, data = dmf_sibs_conservative)
+
 
 ## combine all results into one data.frame
 results <- tidy(model1) %>% mutate(model = "No Controls") %>% 
@@ -183,7 +167,7 @@ ggsave(plot = home_ownership_regression_conservative_plot, here("figures/fig10_h
 
 ```{r}
 ## Number of discordant sibships 
-dmf_analysis_sibs %>% 
+dmf_sibs %>% 
   group_by(serialp_1920) %>% 
   summarize(distinct = n_distinct(ownershp)) %>% 
   count(distinct) %>% 
@@ -196,7 +180,7 @@ Create different, more restrictive subsamples and rerun model 3 on each subgroup
 
 ```{r}
 ## byear restriction 
-byear_restrict_df <- dmf_analysis_sibs %>%
+byear_restrict_df <- dmf_sibs %>%
    group_by(serialp_1920) %>% 
    mutate(byear_range = max(byear) - min(byear)) %>% 
    filter(byear_range < 6)
@@ -204,7 +188,7 @@ byear_restrict_df <- dmf_analysis_sibs %>%
 model_similar_edu <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = byear_restrict_df)) %>% mutate(model = "Birth Year Restriction")
 
 ## county restriction 
-county_restriction_df <- dmf_analysis_sibs %>% 
+county_restriction_df <- dmf_sibs %>% 
   group_by(serialp_1920) %>% 
   filter(n_distinct(countyicp) == 1) %>% 
   ungroup()
@@ -212,7 +196,7 @@ county_restriction_df <- dmf_analysis_sibs %>%
 model_county <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = county_restriction_df)) %>% mutate(model = "County Restriction")
 
 ## marital status restriction 
-marst_restriction_df <- dmf_analysis_sibs %>% 
+marst_restriction_df <- dmf_sibs %>% 
   group_by(serialp_1920) %>% 
   filter(n_distinct(marst) == 1) %>% 
   ungroup()
@@ -221,7 +205,7 @@ marst_similar_model <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urb
 
 
 ## education status restriction 
-educ_restriction_df <- dmf_analysis_sibs %>% 
+educ_restriction_df <- dmf_sibs %>% 
   group_by(serialp_1920) %>% 
   mutate(educ_range = max(educ_yrs) - min(educ_yrs)) %>% 
   filter(educ_range < 3) %>% 
@@ -230,7 +214,7 @@ educ_restriction_df <- dmf_analysis_sibs %>%
 educ_similar_model <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = educ_restriction_df)) %>% mutate(model = "Education Restriction")
 
 ## full restrictions 
-full_restrictions <- dmf_analysis_sibs %>% 
+full_restrictions <- dmf_sibs %>% 
   group_by(serialp_1920) %>% 
   mutate(byear_range = max(byear) - min(byear)) %>% 
   mutate(educ_range = max(educ_yrs) - min(educ_yrs)) %>% 

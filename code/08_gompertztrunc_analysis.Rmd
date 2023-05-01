@@ -10,8 +10,7 @@ library(here)
 source(here("code/helpers.R"))
 
 ## read in sibling mortality data 
-dmf_sibs <- fread(here("data/dmf_sibs.csv")) %>% 
-  janitor::clean_names()
+dmf_sibs <- read_rds(here("data/dmf_sibs.rds"))
 ```
 
 
