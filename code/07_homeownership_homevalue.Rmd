@@ -23,7 +23,7 @@ dmf_analysis_sibs <- read_rds(here("data/dmf_sibs.rds")) %>%
 ## find values of households 
 hh <- fread("/ipums-repo2019/1940/TSV/H.tsv")
 
-## restrict to hoes with non-missing values for ownership 
+## restrict to homes with non-missing values for ownership 
 hh_homes <- hh %>% 
   filter(OWNERSHP == 10)
  
@@ -48,7 +48,6 @@ dmf_analysis_sibs <- dmf_analysis_sibs %>%
 ## recode dmf sibs 
 dmf_analysis_sibs <- dmf_analysis_sibs %>% 
     mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
-  censocdev::recode_education(educ_var = "educ") %>% 
   filter(ownership != 10 | valueh != 9999998) %>% 
   mutate(ownership_value = case_when(
     ownership == 10 & hvalue_state == 1 ~ 1,
@@ -70,8 +69,14 @@ dmf_analysis_sibs <- dmf_analysis_sibs %>%
     race == 100 ~ "White",
     race == 200 ~ "Black",
     TRUE ~ "Other"
-  )) %>% 
-  filter(!is.na(educ_yrs))
+  ))
+
+## dmf sibs 
+dmf_analysis_sibs <- dmf_analysis_sibs %>% 
+  group_by(serialp_1920) %>% 
+  mutate(n = n()) %>% 
+  filter(n > 1) %>% 
+  ungroup()
 
 ## run models 
 model1 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear, data = dmf_analysis_sibs)) %>% mutate(model = "No Controls")
@@ -137,6 +142,8 @@ ggsave(plot = home_ownership_homevalue_plot_1models, here("figures/fig9-home_own
 ## homeownership plot 3 
 ggsave(plot = home_ownership_homevalue_plot_3models, here("figures/reserve_figures/home_ownership_homevalue_plot_3models.png"), width = 6, height = 4)
 ```
+
+
 ## create regression table 
 
 ```{r}
