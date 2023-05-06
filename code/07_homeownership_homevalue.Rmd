@@ -97,7 +97,7 @@ home_ownership_homevalue_plot_1models <- model3 %>%
          upper = estimate + 1.96*std.error) %>% 
   ggplot(aes(x = term, y = e65, ymin = lower, ymax = upper, group = model, color = model, shape = model)) + 
     geom_line(alpha = 0.6, linetype = "dashed") + 
-  geom_pointrange(size = 0.7,  fill = "white", shape = 21, position = position_dodge2(.1)) + 
+  geom_pointrange(size = 0.7,  fill = "white", shape = 22, position = position_dodge2(.1)) + 
   theme_cowplot() + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") + 
   labs(x = "Home Value Quartile",
@@ -126,7 +126,7 @@ home_ownership_homevalue_plot_3models <- model1 %>%
          upper = estimate + 1.96*std.error) %>% 
   ggplot(aes(x = term, y = e65, ymin = lower, ymax = upper, group = model, color = model, shape = model)) + 
     geom_line(alpha = 0.6, linetype = "dashed") + 
-  geom_pointrange(size = 0.7,  fill = "white", shape = 21, position = position_dodge2(.1)) + 
+  geom_pointrange(size = 0.7,  fill = "white", shape = 22, position = position_dodge2(.1)) + 
   theme_cowplot() + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") + 
   scale_color_manual(values = cud) + 
@@ -137,10 +137,10 @@ home_ownership_homevalue_plot_3models <- model1 %>%
            parse = TRUE)
 
 ## homeownership plot 1 
-ggsave(plot = home_ownership_homevalue_plot_1models, here("figures/fig9-home_ownership_homevalue_plot_1models.png"), width = 6, height = 4)
+ggsave(plot = home_ownership_homevalue_plot_3models, here("figures/fig9_home_ownership_homevalue_plot_3models.png"), width = 6, height = 4)
 
 ## homeownership plot 3 
-ggsave(plot = home_ownership_homevalue_plot_3models, here("figures/reserve_figures/home_ownership_homevalue_plot_3models.png"), width = 6, height = 4)
+ggsave(plot = home_ownership_homevalue_plot_1models, here("figures/reserve_figures/home_ownership_homevalue_plot_1models.png"), width = 6, height = 4)
 ```
 
 
