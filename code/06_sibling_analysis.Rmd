@@ -7,8 +7,8 @@ Summary: Create causal estimates of association between home ownership and longe
 
 This code generates: 
 
-- Figure 7, 8, 9, 10 
-- Table 2, 3, 4
+- Figure 6, 7, 8, 8 
+- Table S2, S3, S4
 
 
 ## Library packages 
@@ -45,7 +45,7 @@ home_ownership_regression_plot1 <- results %>%
          upper = estimate + 1.96*std.error) %>% 
   mutate(method = "OLS") %>% 
   ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
-  geom_pointrange(size = 1,  fill = "white", shape = 21) + 
+  geom_pointrange(size = 1,  fill = "white", shape = 22) + 
   theme_cowplot() + 
   ylim(-0.2, 0.9) + 
   labs(x = "Model",
@@ -69,7 +69,7 @@ home_ownership_regression_plot2 <- results %>%
          upper = estimate + 1.96*std.error) %>% 
   mutate(method = "OLS") %>% 
   ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
-  geom_pointrange(size = 1,  fill = "white", shape = 21) + 
+  geom_pointrange(size = 1,  fill = "white", shape = 22) + 
   theme_cowplot() + 
   ylim(-0.2, 0.9) + 
   labs(x = "Model",
@@ -93,7 +93,7 @@ home_ownership_regression_plot3 <- results %>%
          upper = estimate + 1.96*std.error) %>% 
   mutate(method = "OLS") %>% 
   ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
-  geom_pointrange(size = 1,  fill = "white", shape = 21) + 
+  geom_pointrange(size = 1,  fill = "white", shape = 22) + 
   theme_cowplot() + 
   ylim(-0.2, 0.9) + 
   labs(x = "Model",
@@ -106,13 +106,13 @@ home_ownership_regression_plot3 <- results %>%
 ## save plots 
 ggsave(plot = home_ownership_regression_plot1, here("figures/reserve_figures/home_ownership_sib_models1.png"), width = 6, height = 4)
 ggsave(plot = home_ownership_regression_plot2, here("figures/reserve_figures/home_ownership_sib_models2.png"), width = 6, height = 4)
-ggsave(plot = home_ownership_regression_plot3, here("figures/fig7_home_ownership_sib_models3.png"), width = 6, height = 4)
+ggsave(plot = home_ownership_regression_plot3, here("figures/fig6_home_ownership_sib_models3.png"), width = 6, height = 4)
 ```
 
 ## Table 2 — Full Regression Models 
 
 ```{r}
-etable(model1, model2, model4, model3, tex = T, file = here("tables/table3_regtable_sibling_models.tex"), replace = T)
+etable(model1, model2, model4, model3, tex = T, file = here("tables/tableS3_regtable_sibling_models.tex"), replace = T)
 ```
 
 
@@ -149,7 +149,7 @@ home_ownership_regression_conservative_plot <- results %>%
          upper = estimate + 1.96*std.error) %>% 
   mutate(method = "OLS") %>% 
   ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
-  geom_pointrange(size = 1,  fill = "white", shape = 21) + 
+  geom_pointrange(size = 1,  fill = "white", shape = 22) + 
   theme_cowplot() + 
   ylim(-0.2, 0.9) + 
   labs(x = "Model",
@@ -160,7 +160,7 @@ home_ownership_regression_conservative_plot <- results %>%
   geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
 
 ## Save plot 
-ggsave(plot = home_ownership_regression_conservative_plot, here("figures/fig10_home_ownership_sib_models_conservative.png"), width = 6, height = 4)
+ggsave(plot = home_ownership_regression_conservative_plot, here("figures/fig9_home_ownership_sib_models_conservative.png"), width = 6, height = 4)
 ```
 
 ## discordant siblings 
@@ -241,19 +241,19 @@ sensitivity_analysis_plots <- results_robustness %>%
   mutate(method = "OLS") %>% 
   ggplot(aes(y = model, x = e65, xmin = lower, xmax = upper)) + 
   geom_line() + 
-  geom_pointrange(size = 0.7, shape = 21, fill = "white") + 
+  geom_pointrange(size = 0.7, shape = 22, fill = "white") + 
   theme_cowplot() + 
   xlim(-.3, 0.9) + 
   labs(x = "Additional Years of Life",
        y = "") + 
   ggsci::scale_color_lancet() + 
-  geom_vline( xintercept = 0.400182, linetype = "dashed") + 
+  geom_vline( xintercept = 0.31, linetype = "dashed") + 
   theme(legend.position = "NULL") + 
   scale_x_continuous(breaks = scales::pretty_breaks(n = 5)) +
   annotate("text", x = .03, y = 2.5, label = "Renters", fontface = 'italic', angle='90') + 
   geom_vline(xintercept = 0, color = "grey", linetype =  "dashed") + 
-  annotate("text", x = .43, y = 2.5, label = "Full Sample", fontface = 'italic', angle='90') 
+  annotate("text", x = .35, y = 2.5, label = "Full Sample", fontface = 'italic', angle='90') 
 
 ## save plot 
-ggsave(plot = sensitivity_analysis_plots, here("figures/fig8_home_ownership_sensitivity_analyses.png"), width = 7.7, height = 6)
+ggsave(plot = sensitivity_analysis_plots, here("figures/fig7_home_ownership_sensitivity_analyses.png"), width = 7.7, height = 6)
 ```

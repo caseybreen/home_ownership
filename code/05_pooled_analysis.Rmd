@@ -120,7 +120,7 @@ bw_differences_homeown_longevity <- pooled_effect_df_white %>%
   guides(linetype = "none", color = "none") 
 
 ## save plot
-ggsave(bw_differences_homeown_longevity, filename = here("figures/fig6_homeownership_association_bw.png"), width = 6, height = 4)
+ggsave(bw_differences_homeown_longevity, filename = here("figures/fig5_homeownership_association_bw.png"), width = 6, height = 4)
 ```
 
 ## Create regression table 
@@ -128,5 +128,5 @@ ggsave(bw_differences_homeown_longevity, filename = here("figures/fig6_homeowner
 ```{r}
 ## fit full regression models 
 
-etable(pooled_effect_model_white, pooled_effect_controls_model_white, pooled_effect_model_black, pooled_effect_controls_model_black, tex = T, file = here("tables/table2_regtable_homeownership_bw.tex"), replace = T)
+etable(pooled_effect_model_white, pooled_effect_controls_model_white, pooled_effect_model_black, pooled_effect_controls_model_black, tex = T, file = here("tables/tableS2_regtable_homeownership_bw.tex"), replace = T)
 ```

@@ -125,6 +125,6 @@ p <- p + geom_polygon(aes(x = positions$x, y = positions$y), fill = "NA", color 
 ## write out plots 
 ggsave(plot = p, here("figures/reserve_figures/lexis_diagram_1.png"), width = 7.5, height = 5.4)
 ggsave(plot = p, here("figures/reserve_figures/lexis_diagram_2.png"), width = 7.5, height = 5.4)
-ggsave(plot = p, here("figures/fig5_lexis_diagram.png"), width = 7.5, height = 5.4)
+ggsave(plot = p, here("figures/fig4_lexis_diagram.png"), width = 7.5, height = 5.4)
 ```
 
