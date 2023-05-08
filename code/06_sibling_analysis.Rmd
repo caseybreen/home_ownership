@@ -7,9 +7,8 @@ Summary: Create causal estimates of association between home ownership and longe
 
 This code generates: 
 
-- Figure 6, 7, 8, 8 
+- Figure 6, 7, 9 
 - Table S2, S3, S4
-
 
 ## Library packages 
 
