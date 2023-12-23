@@ -1,0 +1,207 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Create weights 
+
+```{r}
+library(tidyverse)
+library(data.table)
+library(autumn)
+```
+
+
+```{r}
+## dmf sibs 
+sib_file <- read_rds(here("data/dmf_sibs.rds")) 
+
+## read in 1940 census 
+census_1940 <- fread("/ipums-repo2019/1940/TSV/P.tsv", select = c("HISTID", "SERIALP", "AGE", "INCWAGE", "SEX", "EDUC", "RACE", "RELATE", "REGION", "MARST", "SEI")) %>%  
+  janitor::clean_names()
+
+## read in 1940 census household
+census_1940_h <- fread("/ipums-repo2019/1940/TSV/H.tsv", select = c("SERIAL", "STATEFIP", "OWNERSHP", "URBAN", "REGION")) %>%
+  janitor::clean_names()
+```
+
+
+```{r}
+## combine census person and household vars 
+census_1940_hh_vars <- census_1940 %>% 
+  inner_join(census_1940_h, by = c("serialp" = "serial"))
+
+
+## drop women (dmf only has men) 
+census_1940_hh_vars <- census_1940_hh_vars %>% 
+  filter(sex == 1) %>% 
+  filter(age %in% 24:35 & relate == 101)
+
+## recode education variable to years of education
+census_1940_hh_vars <- census_1940_hh_vars %>% 
+  censocdev::recode_education(educ_var = "educ")
+
+## read data dictionary initiative (DDI) file with varnames and var labels
+ipums_ddi <- ipumsr::read_ipums_ddi("/ipums-repo2019-1/fullcount.ddi.xml")
+
+## add on ipums value + variable labels
+census_1940_hh_vars <- census_1940_hh_vars %>%
+  janitor::clean_names(case = "all_caps") %>%
+  ipumsr::ipums_collect(ipums_ddi, var_attrs = c("val_labels", "var_label", "var_desc")) %>%
+  janitor::clean_names() 
+```
+
+
+
+```{r}
+## recode variables 
+census_1940_hh_vars <- census_1940_hh_vars %>% 
+  janitor::clean_names(case = "all_caps") %>%
+  ipumsr::ipums_collect(ipums_ddi, var_attrs = c("val_labels", "var_label", "var_desc")) %>%
+  janitor::clean_names()  %>% 
+  mutate(
+  hs = case_when(
+    educ >= 60 & educ < 998 ~ 1,
+    TRUE ~ 0
+  ), 
+  rural = case_when(
+    urban == 1 ~ 1,
+    TRUE ~ 0
+  ),
+  black = case_when( 
+    race == 200 ~ 1,
+    TRUE ~ 0
+  ), white = case_when(
+    race == 100 ~ 1,
+    TRUE ~ 0
+  ),
+  homeown = case_when(
+    ownershp == 10 ~ 1, 
+    TRUE ~ 0
+  ),
+  p_hh_head = case_when(
+    relate == 101 ~ 1, 
+    TRUE ~ 0
+  ),
+  p_hh_head = case_when(
+    relate == 101 ~ 1, 
+    TRUE ~ 0
+  ),
+  educ_level = case_when(
+    educ <= 50 ~ "< High School",
+    educ %in% 60:90 ~ "High School or some college",
+    educ %in% 100 ~ "Bachelors Degree",
+    educ %in% 110:116 ~ "Advanced Degree",
+    TRUE ~ "Other"
+  ), 
+  sei_recode = case_when(
+    sei %in% 1:9 ~ "sei_1_9",
+    sei %in% 10:14 ~ "sei_10_14",
+    sei %in% 15:25 ~ "sei_15_25",
+    sei >= 26 ~      "sei_26+",
+    TRUE ~ "Other",
+  ),
+  marital_status = case_when(
+      marst %in% 1:2 ~ "married",
+      TRUE ~ "not married" ),
+  race_recode = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  )) %>% 
+  mutate(rural = case_when(
+    rural == 1 ~ "Rural",
+    TRUE ~ "Urban"
+  ),
+  homeown = case_when(
+    homeown == 1 ~ "Home Owner",
+    TRUE ~ "Not Home Owner"
+  ),
+  region_string = as_factor(region)) %>% 
+  filter(age %in% 24:35 & relate == 101)
+```
+
+
+
+```{r}
+marginals <- census_1940_hh_vars %>%  
+  select(histid, race_recode, educ_level, sei_recode, marital_status, region_string, rural, homeown) %>%
+  pivot_longer(-histid) %>% 
+  group_by(name, value) %>%
+  tally() %>%            
+  mutate(proportion = prop.table(n)) %>% 
+  select(variable = name, level = value, proportion)
+  
+```
+
+```{r}
+sib_file <- sib_file %>% 
+  janitor::clean_names(case = "all_caps") %>%
+  ipumsr::ipums_collect(ipums_ddi, var_attrs = c("val_labels", "var_label", "var_desc")) %>%
+  janitor::clean_names()  %>% 
+  mutate(
+  hs = case_when(
+    educ >= 60 & educ < 998 ~ 1,
+    TRUE ~ 0
+  ), 
+  rural = case_when(
+    urban == 1 ~ 1,
+    TRUE ~ 0
+  ),
+  black = case_when( 
+    race == 200 ~ 1,
+    TRUE ~ 0
+  ), white = case_when(
+    race == 100 ~ 1,
+    TRUE ~ 0
+  ),
+  homeown = case_when(
+    ownershp == 10 ~ 1, 
+    TRUE ~ 0
+  ),
+  p_hh_head = case_when(
+    relate == 101 ~ 1, 
+    TRUE ~ 0
+  ),
+  p_hh_head = case_when(
+    relate == 101 ~ 1, 
+    TRUE ~ 0
+  ),
+  educ_level = case_when(
+    educ <= 50 ~ "< High School",
+    educ %in% 60:90 ~ "High School or some college",
+    educ %in% 100 ~ "Bachelors Degree",
+    educ %in% 110:116 ~ "Advanced Degree",
+    TRUE ~ "Other"
+  ), 
+  sei_recode = case_when(
+    sei %in% 1:9 ~ "sei_1_9",
+    sei %in% 10:14 ~ "sei_10_14",
+    sei %in% 15:25 ~ "sei_15_25",
+    sei >= 26 ~      "sei_26+",
+    TRUE ~ "Other",
+  ),
+  marital_status = case_when(
+      marst %in% 1:2 ~ "married",
+      TRUE ~ "not married" ),
+  race_recode = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  )) %>% 
+  mutate(rural = case_when(
+    rural == 1 ~ "Rural",
+    TRUE ~ "Urban"
+  ),
+  homeown = case_when(
+    homeown == 1 ~ "Home Owner",
+    TRUE ~ "Not Home Owner"
+  ),
+  region_string = as_factor(region))
+
+
+
+autumn::harvest(data = test, target = marginals, )
+```
+
+

@@ -1,0 +1,29 @@
+variable,level,proportion
+educ_level,< High School,0.6718263430226216
+educ_level,Advanced Degree,0.021376396226919933
+educ_level,Bachelors Degree,0.04514865816083958
+educ_level,High School or some college,0.2457364524567625
+educ_level,Other,0.015912150132856382
+homeown,Home Owner,0.2367081872873629
+homeown,Not Home Owner,0.7632918127126371
+marital_status,married,0.9525389616002865
+marital_status,not married,0.0474610383997135
+race_recode,Black,0.09034838524440017
+race_recode,Other,0.0037727970641929925
+race_recode,White,0.9058788176914069
+region_string,East North Central Div.,0.20154768422374209
+region_string,East South Central Div.,0.08666936461512813
+region_string,Middle Atlantic Division,0.19079941259161534
+region_string,Mountain Division,0.03533442040245913
+region_string,New England Division,0.05349977771511723
+region_string,Pacific Division,0.08434399203067532
+region_string,South Atlantic Division,0.1379807682412532
+region_string,West North Central Div.,0.09847246034375945
+region_string,West South Central Div.,0.11135211983625014
+rural,Rural,0.4350741618522094
+rural,Urban,0.5649258381477906
+sei_recode,Other,0.034121629965648756
+sei_recode,sei_10_14,0.15964968519932574
+sei_recode,sei_15_25,0.2542505551976586
+sei_recode,sei_1_9,0.179315722744889
+sei_recode,sei_26+,0.3726624068924779
