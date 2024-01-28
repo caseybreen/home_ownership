@@ -75,6 +75,14 @@ censoc_dmf_linked_sibs_final <- censoc_dmf_linked_sibs_final %>%
   mutate(educ_yrs = case_when(
     is.na(educ_yrs) ~ median(educ_yrs, na.rm = T),
     TRUE ~ educ_yrs))
+
+## recode first born dummy 
+dmf_sibs <- dmf_sibs %>% 
+  mutate(first_born = case_when(
+    birth_order == 1 ~ 1,
+    TRUE  ~ 0 
+  ))
+
 ```
 
 

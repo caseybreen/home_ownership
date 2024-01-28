@@ -1,0 +1,125 @@
+---
+title: "Siblings"
+author: Casey Breen
+---
+
+
+```{r}
+## Load helper functions and library all packages used for analysis
+library(here)
+source(here("code/helpers.R"))
+
+## read in sibling mortality data 
+dmf_sibs <- read_rds(here("data/dmf_sibs.rds")) 
+```
+
+## byear 
+
+```{r}
+## byear restriction 
+byear_restrict_df <- dmf_sibs %>%
+   group_by(serialp_1920) 
+
+model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + first_born, data = dmf_sibs)
+model3.1 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920, data = dmf_sibs)
+
+
+## fit model 3 
+results <- tidy(model3) %>% mutate(model = "First Born Control") %>% 
+  bind_rows(tidy(model3.1) %>% mutate(model = "No First Born Control")) 
+
+fig11_sib_fe_vs_no_sib_fe <- results %>% 
+    filter(term == "ownership10") %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  mutate(method = "OLS") %>% 
+  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
+  geom_pointrange(size = 1,  fill = "white", shape = 22) + 
+  theme_cowplot() + 
+  ylim(-0.2, 0.9) + 
+  labs(x = "Model",
+       y = "Additional Years of Life") + 
+  scale_color_manual(values = cud) + 
+  theme(legend.position = "NULL") +
+  annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
+  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
+
+
+ggsave(plot = fig11_sib_fe_vs_no_sib_fe, filename = here("figures/fig11_sib_fe_vs_no_sib_fe.png"), width = 6, height = 4)
+
+```
+
+## pairs of two 
+
+```{r}
+pairs <- dmf_sibs %>% 
+  group_by(serialp_1920) %>% 
+  filter(n() == 2)
+
+firstborn_homeowner <- pairs %>%
+  ungroup() %>%
+  group_by(serialp_1920) %>%
+  filter(any(first_born == 1 & ownership == 10)) %>%
+  ungroup()
+
+firstborn_not_homeowner <- pairs %>%
+  ungroup() %>%
+  group_by(serialp_1920) %>%
+  filter(any(first_born == 0 & ownership == 10))
+
+
+model3_firstborn_homeowner <- feols(death_age ~ ownership  | byear  + serialp_1920, data = firstborn_homeowner)
+model3_firstborn_not_homeowner <- feols(death_age ~ ownership | byear + serialp_1920, data = firstborn_not_homeowner)
+
+## fit model 3 
+results <- tidy(model3_firstborn_homeowner) %>% mutate(model = "First Born Homeowner") %>% 
+  bind_rows(tidy(model3_firstborn_not_homeowner) %>% mutate(model = "First Born Not Homeowner")) 
+
+ 
+ ## sib fe 
+results %>% 
+    filter(term == "ownership10") %>% 
+  mutate(e65 = estimate,
+         lower = estimate - 1.96*std.error,
+         upper = estimate + 1.96*std.error) %>% 
+  mutate(method = "OLS") %>% 
+  ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
+  geom_pointrange(size = 1,  fill = "white", shape = 22) + 
+  theme_cowplot() + 
+  # ylim(-0.2, 0.9) + 
+  labs(x = "Model",
+       y = "Additional Years of Life") + 
+  scale_color_manual(values = cud) + 
+  theme(legend.position = "NULL") +
+  annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
+  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
+
+```
+
+
+## Reviewer analysis - education 
+
+```{r}
+dmf_sibs %>% 
+  group_by(first_born) %>% 
+  summarize(mean(educ_yrs))
+
+
+dmf_sibs_inc <- dmf_sibs %>% 
+  filter(incwage %in% c(1:5050))
+         
+dmf_sibs_inc        
+
+summary(lm(incwage ~ as.factor(byear) + as.factor(first_born), data = dmf_sibs_inc))
+
+summary(lm(educ_yrs ~ as.factor(byear) + as.factor(first_born), data = dmf_sibs_inc))
+```
+
+
+```{r}
+dmf_sibs %>% 
+  group_by(serialp_1920) %>% 
+  count()
+```
+
