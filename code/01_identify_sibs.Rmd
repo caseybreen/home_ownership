@@ -34,6 +34,12 @@ siblings_1920 <- census_1920 %>%
   filter(sex == 1) %>% 
   rename_all(paste0, "_1920")
 
+## calculate birth order 
+siblings_1920 <- siblings_1920 %>%
+  arrange(serialp_1920, -age_1920) %>%
+  group_by(serialp_1920) %>%
+  mutate(birth_order = row_number())  
+
 ## match 1920 and 1940 census 
 siblings_matched <- siblings_1920 %>% 
   inner_join(xwalk_1920_1940, by = "histid_1920") %>% 
@@ -59,14 +65,10 @@ censoc_dmf_linked_sibs_final <- censoc_dmf_linked %>%
   filter(n > 1) %>% 
   ungroup()
 
-## recode eduction 
+## recode education 
 censoc_dmf_linked_sibs_final <- censoc_dmf_linked_sibs_final %>% 
   censocdev::recode_education(educ_var = "educ") %>% 
   mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
-  group_by(serialp_1920) %>% 
-  arrange(byear) %>% 
-  mutate(birth_order = row_number()) %>% 
-  ungroup() %>% 
   mutate(racec = case_when(
     race == 100 ~ "White",
     race == 200 ~ "Black",
@@ -75,6 +77,18 @@ censoc_dmf_linked_sibs_final <- censoc_dmf_linked_sibs_final %>%
   mutate(educ_yrs = case_when(
     is.na(educ_yrs) ~ median(educ_yrs, na.rm = T),
     TRUE ~ educ_yrs))
+
+## eldest sib and first born 
+censoc_dmf_linked_sibs_final <- censoc_dmf_linked_sibs_final %>% 
+  group_by(serialp_1920) %>% 
+  mutate(first_born = case_when(
+    birth_order == 1 ~ 1, 
+    TRUE ~ 0)) %>% 
+  mutate(eldest_brother = case_when(
+    birth_order == min(birth_order) ~ 1,
+    TRUE ~ 0
+  ))
+  
 ```
 
 
