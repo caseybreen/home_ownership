@@ -1,9 +1,9 @@
 ---
-title: "R Notebook"
+title: "Construct survey weights"
 author: Casey Breen
 ---
 
-Summary: Construct survey weights rerun maing regression 
+Summary: Construct survey weights and rerun main regressions 
 
 ```{r}
 ## Load helper functions and library all packages used for analysis
@@ -90,14 +90,15 @@ dmf_sibs <- dmf_sibs %>%
 
 
 ```{r}
+## get around 
 marginals_round <- marginals %>% 
   mutate(proportion = case_when(
     variable != "region_string" ~ round(proportion, 3),
     TRUE ~ round(proportion, 4))) %>% 
-  filter(variable %in% c("homeown", "rural", "race_recode", "sei_recode", "educ_level", region_string))
+  filter(variable %in% c("region_string", "homeown", "rural", "race_recode", "sei_recode", "marital_status", "educ_level"))
 
-
-dmf_sibs <- autumn::harvest(data = dmf_sibs, target = marginals_round) 
+## create weights 
+dmf_sibs <- autumn::harvest(data = dmf_sibs %>% mutate(region_string = as.character(region_string)), target = marginals_round) 
 ```
 
 ```{r}
@@ -137,7 +138,7 @@ homeownership_weight_plots <- results %>%
        y = "Additional Years of Life") + 
   scale_color_manual(values = cud) + 
   scale_shape_manual(values = c(22, 24)) +  # Shapes 20 and 21
-  theme(legend.position = "bottom") +  # Place the legend at the bottom
+  theme(legend.position = "bottom", legend.title=element_blank()) +  # Place the legend at the bottom
   annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
   geom_hline(yintercept = 0, color = "grey", linetype =  "dashed") + 
   guides(colour = "none")
