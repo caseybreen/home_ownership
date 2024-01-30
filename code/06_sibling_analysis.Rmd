@@ -184,7 +184,7 @@ byear_restrict_df <- dmf_sibs %>%
    mutate(byear_range = max(byear) - min(byear)) %>% 
    filter(byear_range < 6)
 
-model_similar_edu <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = byear_restrict_df)) %>% mutate(model = "Birth Year Restriction")
+model_similar_byear <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = byear_restrict_df)) %>% mutate(model = "Birth Year Restriction")
 
 ## county restriction 
 county_restriction_df <- dmf_sibs %>% 
@@ -225,7 +225,7 @@ full_restrictions <- dmf_sibs %>%
 full_restrictions_model <- tidy(feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = full_restrictions)) %>% mutate(model = "All Restrictions ")
 
 ## combine estimates into one data frame
-results_robustness <- model_similar_edu %>% 
+results_robustness <- model_similar_byear %>% 
   bind_rows(model_county) %>% 
   bind_rows(marst_similar_model) %>% 
   bind_rows(educ_similar_model) %>% 
@@ -256,3 +256,7 @@ sensitivity_analysis_plots <- results_robustness %>%
 ## save plot 
 ggsave(plot = sensitivity_analysis_plots, here("figures/fig7_home_ownership_sensitivity_analyses.png"), width = 7.7, height = 6)
 ```
+
+
+
+
