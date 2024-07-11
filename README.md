@@ -1,4 +1,4 @@
-## THe Longevity Benefits of Homeownership
+## The Longevity Benefits of Homeownership
 
 This repository contains code and materials to replicate ["The Longevity Benefits of Homeownership."](https://osf.io/preprints/socarxiv/7ya3f/)
 
