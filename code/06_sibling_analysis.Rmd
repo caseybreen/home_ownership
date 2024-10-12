@@ -47,7 +47,7 @@ home_ownership_regression_plot1 <- results %>%
   geom_pointrange(size = 1,  fill = "white", shape = 22) + 
   theme_cowplot() + 
   ylim(-0.2, 0.9) + 
-  labs(x = "Model",
+  labs(x = "",
        y = "Additional Years of Life") + 
   scale_color_manual(values = cud) + 
   theme(legend.position = "NULL") +
@@ -71,7 +71,7 @@ home_ownership_regression_plot2 <- results %>%
   geom_pointrange(size = 1,  fill = "white", shape = 22) + 
   theme_cowplot() + 
   ylim(-0.2, 0.9) + 
-  labs(x = "Model",
+  labs(x = "",
        y = "Additional Years of Life") + 
   scale_color_manual(values = cud) + 
   theme(legend.position = "NULL") +
@@ -94,18 +94,23 @@ home_ownership_regression_plot3 <- results %>%
   ggplot(aes(x = model, y = e65, ymin = lower, ymax = upper, color = model)) + 
   geom_pointrange(size = 1,  fill = "white", shape = 22) + 
   theme_cowplot() + 
-  ylim(-0.2, 0.9) + 
-  labs(x = "Model",
+  labs(x = "",
        y = "Additional Years of Life") + 
   scale_color_manual(values = cud) + 
   theme(legend.position = "NULL") +
   annotate("text", x = 2.3, y = -.05, label = "Renters", fontface = 'italic') + 
-  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed")
+  geom_hline(yintercept = 0, color = "grey", linetype =  "dashed") + 
+  theme(axis.text.x = element_text(face="bold", colour = "black"),
+        axis.title.y = element_text(face="bold", colour = "black")) + 
+    scale_y_continuous(labels = function(x) {
+      ifelse(x < 0, gsub("-", "\u2013", format(x)), format(x))
+    }, lim= c(-0.2, 0.9))
 
 ## save plots 
 ggsave(plot = home_ownership_regression_plot1, here("figures/reserve_figures/home_ownership_sib_models1.png"), width = 6, height = 4)
 ggsave(plot = home_ownership_regression_plot2, here("figures/reserve_figures/home_ownership_sib_models2.png"), width = 6, height = 4)
 ggsave(plot = home_ownership_regression_plot3, here("figures/fig6_home_ownership_sib_models3.png"), width = 6, height = 4)
+ggsave(plot = home_ownership_regression_plot3, here("figures/fig6_home_ownership_sib_models3.pdf"), width = 6, height = 4)
 ```
 
 ## Table 2 — Full Regression Models 
@@ -251,10 +256,14 @@ sensitivity_analysis_plots <- results_robustness %>%
   scale_x_continuous(breaks = scales::pretty_breaks(n = 5)) +
   annotate("text", x = .03, y = 2.5, label = "Renters", fontface = 'italic', angle='90') + 
   geom_vline(xintercept = 0, color = "grey", linetype =  "dashed") + 
-  annotate("text", x = .35, y = 2.5, label = "Full Sample", fontface = 'italic', angle='90') 
+  annotate("text", x = .35, y = 2.5, label = "Full Sample", fontface = 'italic', angle='90') + 
+    theme(axis.text.y = element_text(face="bold", colour = "black"),
+        axis.title.x = element_text(face="bold", colour = "black")) 
 
 ## save plot 
 ggsave(plot = sensitivity_analysis_plots, here("figures/fig7_home_ownership_sensitivity_analyses.png"), width = 7.7, height = 6)
+ggsave(plot = sensitivity_analysis_plots, here("figures/fig7_home_ownership_sensitivity_analyses.pdf"), width = 7.7, height = 6)
+
 ```
 
 

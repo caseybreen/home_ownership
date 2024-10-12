@@ -20,13 +20,13 @@ dmf_sibs <- read_rds(here("data/dmf_sibs.rds"))
 byear_restrict_df <- dmf_sibs %>%
    group_by(serialp_1920) 
 
-model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + first_born, data = dmf_sibs)
+model3 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + eldest_brother, data = dmf_sibs)
 model3.1 <- feols(death_age ~ ownership + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920, data = dmf_sibs)
 
 
 ## fit model 3 
-results <- tidy(model3) %>% mutate(model = "First Born Control") %>% 
-  bind_rows(tidy(model3.1) %>% mutate(model = "No First Born Control")) 
+results <- tidy(model3) %>% mutate(model = "Eldest Sibling Control") %>% 
+  bind_rows(tidy(model3.1) %>% mutate(model = "No Eldest Born Control")) 
 
 fig11_sib_fe_vs_no_sib_fe <- results %>% 
     filter(term == "ownership10") %>% 
@@ -73,7 +73,7 @@ model3_firstborn_homeowner <- feols(death_age ~ ownership  | byear  + serialp_19
 model3_firstborn_not_homeowner <- feols(death_age ~ ownership | byear + serialp_1920, data = firstborn_not_homeowner)
 
 ## fit model 3 
-results <- tidy(model3_firstborn_homeowner) %>% mutate(model = "First Born Homeowner") %>% 
+results <- tidy(model3_firstborn_homeowner) %>% mutate(model = "Eldest Born Homeowner") %>% 
   bind_rows(tidy(model3_firstborn_not_homeowner) %>% mutate(model = "First Born Not Homeowner")) 
 
  
@@ -111,9 +111,9 @@ dmf_sibs_inc <- dmf_sibs %>%
          
 dmf_sibs_inc        
 
-summary(lm(incwage ~ as.factor(byear) + as.factor(first_born), data = dmf_sibs_inc))
+summary(lm(incwage ~ as.factor(byear) + as.factor(eldest_brother), data = dmf_sibs_inc))
 
-summary(lm(educ_yrs ~ as.factor(byear) + as.factor(first_born), data = dmf_sibs_inc))
+summary(lm(educ_yrs ~ as.factor(byear) + as.factor(eldest_brother), data = dmf_sibs_inc))
 ```
 
 
