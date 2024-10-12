@@ -112,7 +112,7 @@ bw_differences_homeown_longevity <- pooled_effect_df_white %>%
   scale_color_manual(values = cud) + 
   labs(
     x = "",
-    y = "Difference in Life Expectancy \n (Years)",
+    y = "Difference in Life Expectancy \n (years)",
     title = ""
   ) +
   theme(
