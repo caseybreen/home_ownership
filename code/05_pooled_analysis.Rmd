@@ -43,7 +43,7 @@ dmf_hhead <- dmf_hhead %>%
     TRUE ~ "Other"
   )) %>% 
   mutate(educ = as.numeric(educ)) %>% 
-  censocdev::recode_education(educ_var = "educ") %>% 
+  recode_education(educ_var = "educ") %>% 
   filter(!is.na(educ_yrs))
 
 ## pooled effects white 
@@ -52,7 +52,7 @@ pooled_effect_model_white <- fixest::feols(death_age ~ ownership | byear, dmf_hh
 pooled_effect_df_white <- pooled_effect_model_white %>%
   tidy() %>% 
   mutate(
-    type = "White Americans",
+    type = "White",
     model = "No Controls"
   )
 
@@ -62,7 +62,7 @@ pooled_effect_controls_model_white <- feols(death_age ~ ownership + educ_yrs  + 
 pooled_effect_controls_df_white <- pooled_effect_controls_model_white %>%
   tidy() %>% 
   mutate(
-    type = "White Americans",
+    type = "White",
     model = "Controls"
   )
 
@@ -72,7 +72,7 @@ pooled_effect_model_black <- fixest::feols(death_age ~ ownership | byear, dmf_hh
 pooled_effect_black_df <- pooled_effect_model_black %>% 
   tidy() %>% 
   mutate(
-    type = "Black Americans",
+    type = "Black",
     model = "No Controls"
   )
 
@@ -82,7 +82,7 @@ pooled_effect_controls_model_black <- feols(death_age ~ ownership + educ_yrs + u
 pooled_effect_controls_black_df <- pooled_effect_controls_model_black %>% 
   tidy() %>% 
   mutate(
-    type = "Black Americans",
+    type = "Black",
     model = "Controls"
   )
 ```
@@ -103,24 +103,29 @@ bw_differences_homeown_longevity <- pooled_effect_df_white %>%
   )) +
   geom_pointrange(size = 0.7,  fill = "white", position = position_dodge2(.16)) +
   theme_cowplot() +
-  ylim(-0.2, 1) +
+  scale_y_continuous(labels = function(x) {
+      ifelse(x < 0, gsub("-", "\u2013", format(x)), format(x))
+    }, lim= c(-0.2, 1)) + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
   annotate("text", x = 1.5, y = -.05, label = "Renters", fontface = "italic") +
   scale_shape_manual(values = c(21, 23)) + 
   scale_color_manual(values = cud) + 
   labs(
     x = "",
-    y = "Difference in Life Expectancy",
+    y = "Difference in Life Expectancy \n (Years)",
     title = ""
   ) +
   theme(
     legend.position = "bottom",
     legend.title = element_blank()
   ) +
-  guides(linetype = "none", color = "none") 
+  guides(linetype = "none", color = "none") + 
+  theme(axis.title.y = element_text(face="bold", colour = "black"),
+        axis.text.x = element_text(face="bold", colour = "black")) 
 
 ## save plot
 ggsave(bw_differences_homeown_longevity, filename = here("figures/fig5_homeownership_association_bw.png"), width = 6, height = 4)
+ggsave(bw_differences_homeown_longevity, filename = here("figures/fig5_homeownership_association_bw.pdf"), width = 6, height = 4)
 ```
 
 ## Create regression table 

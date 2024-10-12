@@ -47,6 +47,7 @@ dmf_analysis_sibs <- dmf_analysis_sibs %>%
 
 ## recode dmf sibs 
 dmf_analysis_sibs <- dmf_analysis_sibs %>% 
+  ungroup() %>% 
     mutate(ownership = relevel(as.factor(ownershp), ref = "20")) %>% 
   filter(ownership != 10 | valueh != 9999998) %>% 
   mutate(ownership_value = case_when(
@@ -79,9 +80,9 @@ dmf_analysis_sibs <- dmf_analysis_sibs %>%
   ungroup()
 
 ## run models 
-model1 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear, data = dmf_analysis_sibs)) %>% mutate(model = "No Controls")
+model1 <- tidy(feols(death_age ~ as.factor(ownership_value)  | byear, data = dmf_analysis_sibs)) %>% mutate(model = "No controls")
 model2 <- tidy(feols(death_age ~ as.factor(ownership_value)  + educ_yrs + racec + urban | byear  + occ  + marst + statefip, data = dmf_analysis_sibs)) %>% mutate(model = "Controls")
-model3 <- tidy(feols(death_age ~ as.factor(ownership_value) + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)) %>% mutate(model = "Controls + Sibling FE")
+model3 <- tidy(feols(death_age ~ as.factor(ownership_value) + educ_yrs + racec + urban | byear + occ + marst + statefip + serialp_1920 + birth_order, data = dmf_analysis_sibs)) %>% mutate(model = "Controls + sibling FE")
 
 ## effect heterogeneity 
 home_ownership_homevalue_plot_1models <- model3 %>% 
@@ -115,12 +116,12 @@ home_ownership_homevalue_plot_3models <- model1 %>%
   bind_rows(model3) %>% 
     filter(str_detect(pattern = "as.factor", string = term)) %>% 
   mutate(term = case_when(
-    term == "as.factor(ownership_value)1" ~ "Q1 (Low)",
+    term == "as.factor(ownership_value)1" ~ "Q1 (low)",
     term == "as.factor(ownership_value)2" ~ "Q2",
     term == "as.factor(ownership_value)3" ~ "Q3",
-    term == "as.factor(ownership_value)4" ~ "Q4 (High)"
+    term == "as.factor(ownership_value)4" ~ "Q4 (high)"
   )) %>% 
-  mutate(model = factor(model, levels= c("No Controls", "Controls", "Controls + Sibling FE"))) %>% 
+  mutate(model = factor(model, levels= c("No controls", "Controls", "Controls + sibling FE"))) %>% 
   mutate(e65 = estimate,
          lower = estimate - 1.96*std.error,
          upper = estimate + 1.96*std.error) %>% 
@@ -133,11 +134,14 @@ home_ownership_homevalue_plot_3models <- model1 %>%
   labs(x = "Home Value Quartile",
        y = "Additional Years of Life") + 
   theme(legend.position = "bottom") + 
-  annotate("text", x = 3.5, y = -.05, label = "Renters",
-           parse = TRUE)
+  annotate("text", x = 3.5, y = -.05, label = "Renters", fontface = "italic") + 
+  theme(axis.title.y = element_text(face="bold", colour = "black"),
+  axis.title.x = element_text(face="bold", colour = "black"),
+  legend.title=element_blank()) 
 
 ## homeownership plot 1 
 ggsave(plot = home_ownership_homevalue_plot_3models, here("figures/fig8_home_ownership_homevalue_plot_3models.png"), width = 6, height = 4)
+ggsave(plot = home_ownership_homevalue_plot_3models, here("figures/fig8_home_ownership_homevalue_plot_3models.pdf"), width = 6, height = 4)
 
 ## homeownership plot 3 
 ggsave(plot = home_ownership_homevalue_plot_1models, here("figures/reserve_figures/home_ownership_homevalue_plot_1models.png"), width = 6, height = 4)

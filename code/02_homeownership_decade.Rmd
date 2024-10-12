@@ -255,25 +255,28 @@ bw_homeownership_plot <- bw_tabs %>%
     race == "Black" ~ "Black Americans",
     race == "White" ~ "White Americans"
   )) %>% 
-  ggplot(aes(x = year, y = ownershp_avg, linetype = race, shape = race)) + 
+  ggplot(aes(x = year, y = ownershp_avg*100, linetype = race, shape = race)) + 
   geom_line(size = 1) + 
   geom_point(size = 3.5, fill = "white") + 
-  scale_y_continuous(labels = scales::percent,
-                     breaks = scales::pretty_breaks(n = 10), limits = c(0, 0.6)) + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10), limits = c(0, 60)) + 
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 8), limits = c(1870, 1945)) + 
   cowplot::theme_cowplot() + 
   scale_shape_manual(values = c(21, 23)) + 
-  theme(legend.position = "bottom",
+  theme(legend.position = "NULL",
         legend.title=element_blank()) + 
   geom_text_repel(aes(label = label),
-                  nudge_x = 3,
-                  na.rm = TRUE) + 
-  xlim(1870, 1945) + 
+                  nudge_x = 5,
+                  na.rm = TRUE,
+                segment.color = NA) + 
   labs(x = "Year",
-       y = "Home Ownership Rate",
-       title = "Home Ownership Rates Among Male Household Heads") 
+       y = "Homeownership Rate (%)") + 
+  theme(axis.title.y = element_text(face="bold", colour = "black"),
+        axis.title.x = element_text(face="bold", colour = "black")) 
+
 
 ## save plot 
 ggsave(plot = bw_homeownership_plot, filename = here("figures/fig1_home_ownership_by_decade.png"), width = 8, height = 5)
+ggsave(plot = bw_homeownership_plot, filename = here("figures/fig1_home_ownership_by_decade.pdf"), width = 8, height = 5)
 ```
 
 
@@ -290,8 +293,8 @@ bw_tabs_age <- tabs_1940_bw_age %>% mutate(year = 1940) %>%
 ## Create labels 
 bw_tabs_age <- bw_tabs_age %>% 
   mutate(race = case_when(
-    race == "Black" ~ "Black Americans",
-    race == "White" ~ "White Americans"
+    race == "Black" ~ "Black",
+    race == "White" ~ "White"
   )) %>% 
   mutate(age_cat = case_when(
     age_cat == "65+" ~ "65+     ",
@@ -299,30 +302,52 @@ bw_tabs_age <- bw_tabs_age %>%
   ))
 
 ## Create homeownership rates plot 
-home_ownership_rates_plot <- bw_tabs_age %>%
+# Separate data for Black race
+home_ownership_plot_black <- bw_tabs_age %>%
+  filter(race == "Black") %>%
   mutate(label = if_else(year == max(year), as.character(age_cat), NA_character_)) %>%
-  ggplot(aes(x = year, y = ownershp_avg, color = age_cat, shape = race)) + 
+  ggplot(aes(x = year, y = ownershp_avg * 100, color = age_cat, shape = race)) + 
   geom_line(size = 1) + 
   geom_point(size = 3, fill = "white") + 
   cowplot::theme_cowplot() + 
   scale_color_brewer(palette = "Dark2") +
- # scale_color_viridis_d() + 
   theme(legend.position = "none") + 
   scale_shape_manual(values = c(21, 23)) + 
-  scale_y_continuous(labels = scales::percent,
-                     breaks = scales::pretty_breaks(n = 10)) + 
-  labs(x = "Year",
-       y = "Home Ownership Rate",
-       title = "Home Ownership Rates Among Male Household Heads") + 
-  geom_text_repel(aes(label = label),
-                  nudge_x = 7,
-                  na.rm = TRUE) + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20), lim = c(0, 76)) + 
+  labs(x = "Year", y = "Homeownership Rate (%)", title = "Black") + 
+  geom_text_repel(aes(label = label), nudge_x = 7, na.rm = TRUE, 
+                segment.color = NA) + 
   xlim(1900, 1947) + 
   theme(strip.background = element_blank()) + 
-  facet_wrap(~race) + 
-  panel_border()
+  panel_border() + 
+  theme(axis.title.y = element_text(face = "bold", colour = "black"),
+        axis.title.x = element_text(face = "bold", colour = "black"))
+
+# Separate data for White race
+home_ownership_plot_white <- bw_tabs_age %>%
+  filter(race == "White") %>%
+  mutate(label = if_else(year == max(year), as.character(age_cat), NA_character_)) %>%
+  ggplot(aes(x = year, y = ownershp_avg * 100, color = age_cat, shape = race)) + 
+  geom_line(size = 1) + 
+  geom_point(size = 3, fill = "white") + 
+  cowplot::theme_cowplot() + 
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "none") + 
+  scale_shape_manual(values = c(21, 23)) + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20), lim = c(0, 76)) + 
+  labs(x = "Year", y = "", title = "White") + 
+  geom_text_repel(aes(label = label), nudge_x = 7, na.rm = TRUE, segment.color = NA) + 
+  xlim(1900, 1947) + 
+  theme(strip.background = element_blank()) + 
+  panel_border() + 
+  theme(axis.title.y = element_text(face = "bold", colour = "black"),
+        axis.title.x = element_text(face = "bold", colour = "black"))
+
+# Combine the two plots using plot_grid
+home_ownership_rates_plot <- cowplot::plot_grid(home_ownership_plot_black, home_ownership_plot_white, ncol = 2)
 
 ## Save plot 
 ggsave(plot = home_ownership_rates_plot, filename = here("figures/fig2_home_ownership_by_decade_age.png"), width = 9, height = 5)
+ggsave(plot = home_ownership_rates_plot, filename = here("figures/fig2_home_ownership_by_decade_age.pdf"), width = 9, height = 5)
 ```
 
