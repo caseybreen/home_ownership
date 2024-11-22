@@ -33,7 +33,8 @@ Alternatively, researchers can run the following files individually in order:
 - `05_pooled_analysis.Rmd` - Estimate the unadjusted difference in life expectancy between homeowners and renters.  
 - `06_sibling_analysis.Rmd` - Estimate the causal effect of homeownership on longevity 
 - `07_homeownership_homevalue.Rmd` - Estimate effect heterogeity with respect to homeownership 
-- `08_homeownership_homevalue.Rmd` - Estimate unadjusted difference in life expectancy at age 65 between homeowners and renters 
+- `08_homeownership_homevalue.Rmd` - Estimate unadjusted difference in life expectancy at age 65 between homeowners and renters
+- `09_test script` -- script for testing...
 
 ### Authors
 
