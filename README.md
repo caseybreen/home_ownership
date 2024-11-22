@@ -26,7 +26,7 @@ After downloading the required data, researchers can run the following script to
 
 Alternatively, researchers can run the following files individually in order: 
   
-  - `01_identify_sibs.Rmd` - This file identifies sibs in the 1920 Census and links them onto the 1940 Census and DMF mortality records 
+- `01_identify_sibs.Rmd` - This file identifies sibs in the 1920 Census and links them onto the 1940 Census and DMF mortality records 
 - `02_homeownership_decade.Rmd` - Calculate homeownership rates using complete count census data from 1900, 1910, 1920, 1930, and 1940.   
 - `03_representativity_table.Rmd` - Compare the representativeness of our samples to the general population 
 - `04_lexis_diagram.Rmd` - Create a lexis diagram that 
