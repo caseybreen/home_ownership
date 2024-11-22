@@ -16,8 +16,8 @@ This code generates:
 ## Load helper functions and library all packages used for analysis
 library(here)
 source(here("code/helpers.R"))
-## read in sibling mortality data 
 
+## read in sibling mortality data 
 dmf_sibs <- read_rds(here("data/dmf_sibs.rds")) 
 ```
 
